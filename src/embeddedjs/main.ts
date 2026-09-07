@@ -1,17 +1,7 @@
 /*
- * AeroPress Timer — inverted method, manual advance
- *
- * Buttons:
- *   SELECT  advance to the next step (works any time — skip or finish a step)
- *   UP      restart the current step (re-arms its timer)
- *   DOWN    go back one step
- *   BACK    exit (system default — not captured)
- *   TAP     anywhere on screen = same as SELECT (needs touch-enabled SDK/firmware)
- *
- * Timed steps count down and double-pulse the vibe motor at 0:00,
- * then WAIT for you to press SELECT. Nothing auto-advances.
- *
- * Edit the RECIPE array below to change your steps.
+ * AeroPress Timer: inverted method, manual advance.
+ * Timed steps count down, vibrate (and chime) at 0:00, then wait for SELECT.
+ * Button map, touch caveats, and build notes are in README.md.
  */
 
 import {} from "piu/MC";
@@ -33,6 +23,9 @@ const RECIPE: Step[] = [
 	{ name: "PRESS", seconds: 0,  instr: "Cap on, flip onto mug, press slow." },
 	{ name: "DONE",  seconds: 0,  instr: "Enjoy your coffee!" },
 ];
+
+// Chime at 0:00, alongside the vibe. MIDI note numbers (60 = C4), volume 0-100.
+const CHIME = { notes: [72, 76, 79], noteMs: 120, volume: 40 };
 // ----------------------------------------------------------------------------
 
 // 64-color display: stick to palette-aligned values (00 / 55 / AA / FF per channel)
@@ -50,10 +43,6 @@ const timeDoneStyle = new Style({ font: "bold 42px Bitham", color: COLOR_DONE, h
 const instrStyle    = new Style({ font: "bold 18px Gothic", color: COLOR_TEXT, horizontal: "center" });
 const hintStyle     = new Style({ font: "14px Gothic",      color: COLOR_DIM,  horizontal: "center" });
 
-// Touch: tap anywhere to advance (same as SELECT). Requires an SDK/firmware
-// with touch integrated; on older versions the events simply never fire and
-// buttons still work. If the *build* errors on touch, set touchCount to 0
-// below and remove `active`/`Behavior` from the application template.
 let controller: AeroPressTimer | undefined;
 
 class TapBehavior extends Behavior {
@@ -72,6 +61,26 @@ const AeroApplication = Application.template(($: any) => ({
 		Label($, { anchor: "HINT",    left: 0, right: 0, bottom: 2, height: 18, style: hintStyle,    string: "" }),
 	],
 }));
+
+// FFI bindings from src/c/chime.c. All three are absent when the mod was built without FFI.
+declare const Natives: {
+	chime_muted?(): number;
+	chime_set_note?(index: number, midi: number): number;
+	chime_play?(count: number, durationMs: number, volume: number): number;
+} | undefined;
+
+function chime(): void {
+	try {
+		if (typeof Natives === "undefined" || !Natives.chime_muted || !Natives.chime_set_note || !Natives.chime_play) return;
+		if (Natives.chime_muted()) return;
+		for (let i = 0; i < CHIME.notes.length; i++)
+			Natives.chime_set_note(i, CHIME.notes[i]);
+		Natives.chime_play(CHIME.notes.length, CHIME.noteMs, CHIME.volume);
+	}
+	catch {
+		// Speaker unavailable: the vibe is the alert.
+	}
+}
 
 function formatTime(totalSeconds: number): string {
 	const m = Math.floor(totalSeconds / 60);
@@ -144,6 +153,7 @@ class AeroPressTimer {
 			this.ui.TIME.style = timeDoneStyle;
 			this.ui.INSTR.string = "Time! SEL for next step.";
 			Vibes.doublePulse();
+			chime();
 		}
 	}
 

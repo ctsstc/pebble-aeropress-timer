@@ -4,15 +4,13 @@ int main(void) {
   Window *w = window_create();
   window_stack_push(w, true);
 
+  moddable_createMachine(&(ModdableCreationRecord){
+    .recordSize = sizeof(ModdableCreationRecord),
 #ifdef PBL_DEBUG
-  ModdableCreationRecord creation = {
-    .recordSize = sizeof(creation),
-    .flags = kModdableCreationFlagDebug
-  };
-  moddable_createMachine(&creation);
-#else
-  moddable_createMachine(NULL);
+    .flags = kModdableCreationFlagDebug,
 #endif
+    .fxBuildFFI = fxBuildFFI,
+  });
 
   window_destroy(w);
 

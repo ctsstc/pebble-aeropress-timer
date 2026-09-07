@@ -5,5 +5,21 @@
 	],
 	"modules": {
 		"*": "./main"
+	},
+	"ffi": {
+		"functions": {
+			"chime_muted": {
+				"arguments": [],
+				"returns": "int32_t"
+			},
+			"chime_set_note": {
+				"arguments": [ "uint32_t", "uint32_t" ],
+				"returns": "int32_t"
+			},
+			"chime_play": {
+				"arguments": [ "uint32_t", "uint32_t", "uint32_t" ],
+				"returns": "int32_t"
+			}
+		}
 	}
 }
