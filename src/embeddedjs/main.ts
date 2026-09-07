@@ -7,6 +7,7 @@
 import {} from "piu/MC";
 import Button from "pebble/button";
 import Vibes from "pebble/vibes";
+import Time from "time";
 
 interface Step {
 	name: string;
@@ -90,7 +91,8 @@ function formatTime(totalSeconds: number): string {
 
 class AeroPressTimer {
 	private index = 0;
-	private endAt = 0;
+	private startTicks = 0;
+	private durationMs = 0;
 	private ticker: ReturnType<typeof setInterval> | undefined;
 	private readonly ui: any;
 
@@ -136,7 +138,8 @@ class AeroPressTimer {
 		this.ui.TIME.style = timeStyle;
 
 		if (step.seconds > 0) {
-			this.endAt = Date.now() + step.seconds * 1000;
+			this.startTicks = Time.ticks;
+			this.durationMs = step.seconds * 1000;
 			this.ui.TIME.string = formatTime(step.seconds);
 			this.ticker = setInterval(() => this.tick(), 250);
 		}
@@ -146,7 +149,8 @@ class AeroPressTimer {
 	}
 
 	private tick(): void {
-		const remaining = Math.max(0, Math.ceil((this.endAt - Date.now()) / 1000));
+		// Time.ticks is monotonic. Date.now() on PebbleOS 4.33 reads a full second ahead for ~250 ms after each second boundary.
+		const remaining = Math.max(0, Math.ceil((this.durationMs - Time.delta(this.startTicks)) / 1000));
 		this.ui.TIME.string = formatTime(remaining);
 		if (remaining <= 0) {
 			this.stopTicker();

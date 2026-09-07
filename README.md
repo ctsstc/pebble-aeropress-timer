@@ -94,6 +94,10 @@ pebble logs --emulator emery                      # console.log output only
   plus the one `fxBuildFFI` line the chime needs.
 - `pebble logs` on the emulator shows `console.log` output only, never
   vibration or speaker events. Verify those on the wrist.
+- The countdown is driven by `Time.ticks` from the Moddable `time` module, not
+  `Date.now()`. On PebbleOS 4.33 `Date.now()` reads a full second ahead for the
+  first ~250 ms after every second boundary and then drops back, which made the
+  countdown flicker between two values.
 - Iterating with an AI? Open this folder in Claude Code and let it run
   `pebble build` and fix errors in place. (`pebble new-project --ai` exists for
   the same workflow on fresh projects.)
