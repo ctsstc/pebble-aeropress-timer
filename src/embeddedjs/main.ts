@@ -1,6 +1,6 @@
 /*
  * AeroPress Timer: inverted method, manual advance.
- * Timed steps count down, vibrate (and chime) at 0:00, then wait for SELECT.
+ * Timed steps count down, vibrate (and chime) at 0:00, then wait for DOWN.
  * Button map, touch caveats, and build notes are in README.md.
  */
 
@@ -102,9 +102,9 @@ class AeroPressTimer {
 			types: ["select", "up", "down"],
 			onPush: (down: number, type: string): void => {
 				if (!down) return;
-				if (type === "select") this.next();
-				else if (type === "up") this.restartStep();
-				else if (type === "down") this.previous();
+				if (type === "down") this.next();
+				else if (type === "select") this.restartStep();
+				else if (type === "up") this.previous();
 			},
 		});
 		this.enterStep(0);
@@ -133,8 +133,8 @@ class AeroPressTimer {
 		this.ui.NAME.string = step.name;
 		this.ui.INSTR.string = step.instr;
 		this.ui.HINT.string = (i === RECIPE.length - 1)
-			? "SEL start over"
-			: "SEL next  UP redo  DN back";
+			? "DN start over"
+			: "UP back  SEL redo  DN next";
 		this.ui.TIME.style = timeStyle;
 
 		if (step.seconds > 0) {
@@ -155,7 +155,7 @@ class AeroPressTimer {
 		if (remaining <= 0) {
 			this.stopTicker();
 			this.ui.TIME.style = timeDoneStyle;
-			this.ui.INSTR.string = "Time! SEL for next step.";
+			this.ui.INSTR.string = "Time! DN for next step.";
 			Vibes.doublePulse();
 			chime();
 		}

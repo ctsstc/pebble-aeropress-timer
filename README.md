@@ -9,19 +9,21 @@ Default recipe: Setup, 30s steep, Stir, 90s steep, Flip & press, Done.
 
 | Button | Action |
 | ------ | ------ |
-| SELECT | Next step (any time, also skips a running timer) |
-| UP     | Restart current step (re-arms its timer) |
-| DOWN   | Back one step |
+| UP     | Back one step |
+| SELECT | Restart current step (re-arms its timer) |
+| DOWN   | Next step (any time, also skips a running timer) |
 | BACK   | Exit (system default) |
-| TAP    | Anywhere on screen = SELECT (touch-enabled firmware/SDK only) |
+| TAP    | Anywhere on screen = next step (touch-enabled firmware/SDK only) |
 
-On the last step, SELECT starts over from the top.
+On the last step, DOWN starts over from the top. The layout follows the
+Pebble convention of moving down through a list: down to progress, up to go
+back, middle to act on the current step.
 
 ## Customize
 
 Both live at the top of `src/embeddedjs/main.ts`:
 
-- `RECIPE`: the steps. `seconds: 0` = untimed step (shows `--:--`, waits for SELECT).
+- `RECIPE`: the steps. `seconds: 0` = untimed step (shows `--:--`, waits for DOWN).
 - `CHIME`: notes played at 0:00 (MIDI numbers, 60 = C4), note length in ms,
   and volume 0-100. Default is C5, E5, G5 at 120 ms each.
 
