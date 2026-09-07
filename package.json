@@ -6,7 +6,7 @@
   "private": true,
   "dependencies": {},
   "pebble": {
-    "displayName": "AeroPress",
+    "displayName": "AeroPress Timer",
     "uuid": "0858949a-8bdd-48f6-a222-6792134d960e",
     "projectType": "moddable",
     "sdkVersion": "3",
