@@ -37,12 +37,13 @@ const COLOR_TIME = "#FFAA00"; // amber while counting
 const COLOR_DONE = "#00FF00"; // green at 0:00
 
 const bgSkin        = new Skin({ fill: COLOR_BG });
-const stepNumStyle  = new Style({ font: "14px Gothic",      color: COLOR_DIM,  horizontal: "center" });
-const nameStyle     = new Style({ font: "bold 28px Gothic", color: COLOR_TEXT, horizontal: "center" });
-const timeStyle     = new Style({ font: "bold 42px Bitham", color: COLOR_TIME, horizontal: "center" });
-const timeDoneStyle = new Style({ font: "bold 42px Bitham", color: COLOR_DONE, horizontal: "center" });
-const instrStyle    = new Style({ font: "bold 18px Gothic", color: COLOR_TEXT, horizontal: "center" });
-const hintStyle     = new Style({ font: "14px Gothic",      color: COLOR_DIM,  horizontal: "center" });
+const stepNumStyle  = new Style({ font: "18px Gothic",      color: COLOR_DIM,  horizontal: "center" });
+const nameStyle     = new Style({ font: "bold 36px Gothic", color: COLOR_TEXT, horizontal: "center" });
+const timeStyle     = new Style({ font: "bold 49px Roboto", color: COLOR_TIME, horizontal: "center" });
+const timeDoneStyle = new Style({ font: "bold 49px Roboto", color: COLOR_DONE, horizontal: "center" });
+const timeIdleStyle = new Style({ font: "bold 42px Bitham", color: COLOR_DIM,  horizontal: "center" }); // Roboto 49 has no hyphen glyph
+const instrStyle    = new Style({ font: "bold 24px Gothic", color: COLOR_TEXT, horizontal: "center" });
+const hintStyle     = new Style({ font: "18px Gothic",      color: COLOR_DIM,  horizontal: "center" });
 
 let controller: AeroPressTimer | undefined;
 
@@ -55,11 +56,11 @@ class TapBehavior extends Behavior {
 const AeroApplication = Application.template(($: any) => ({
 	skin: bgSkin, active: true, Behavior: TapBehavior,
 	contents: [
-		Label($, { anchor: "STEPNUM", left: 0, right: 0, top: 6,    height: 18, style: stepNumStyle, string: "" }),
-		Label($, { anchor: "NAME",    left: 0, right: 0, top: 26,   height: 32, style: nameStyle,    string: "" }),
-		Label($, { anchor: "TIME",    left: 0, right: 0, top: 62,   height: 48, style: timeStyle,    string: "" }),
-		Text($,  { anchor: "INSTR",   left: 6, right: 6, top: 118,  height: 84, style: instrStyle,   string: "" }),
-		Label($, { anchor: "HINT",    left: 0, right: 0, bottom: 2, height: 18, style: hintStyle,    string: "" }),
+		Label($, { anchor: "STEPNUM", left: 0, right: 0, top: 0,    height: 20, style: stepNumStyle, string: "" }),
+		Label($, { anchor: "NAME",    left: 0, right: 0, top: 20,   height: 38, style: nameStyle,    string: "" }),
+		Label($, { anchor: "TIME",    left: 0, right: 0, top: 58,   height: 56, style: timeStyle,    string: "" }),
+		Text($,  { anchor: "INSTR",   left: 4, right: 4, top: 116,  height: 90, style: instrStyle,   string: "" }),
+		Label($, { anchor: "HINT",    left: 0, right: 0, bottom: 0, height: 20, style: hintStyle,    string: "" }),
 	],
 }));
 
@@ -144,6 +145,7 @@ class AeroPressTimer {
 			this.ticker = setInterval(() => this.tick(), 250);
 		}
 		else {
+			this.ui.TIME.style = timeIdleStyle;
 			this.ui.TIME.string = "--:--";
 		}
 	}
