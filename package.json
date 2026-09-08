@@ -25,7 +25,8 @@
       "VIBE_ENABLED",
       "CHIME_VOLUME",
       "TOUCH_ENABLED",
-      "CHIME_MELODY"
+      "CHIME_MELODY",
+      "PREVIEW"
     ],
     "resources": {
       "media": []

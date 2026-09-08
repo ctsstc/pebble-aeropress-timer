@@ -31,10 +31,16 @@ Both live at the top of `src/embeddedjs/main.ts`:
 ## Settings
 
 In the Pebble phone app, open AeroPress Timer and tap Settings. The page has
-chime on/off, chime melody (single tone, three notes, or the teapot phrase),
-vibration on/off, chime volume, and tap-to-advance on/off. Values
-travel to the watch as an App Message and are saved on the watch, so they hold
-without the phone.
+chime on/off, chime melody, vibration on/off, chime volume, and tap-to-advance
+on/off. Values travel to the watch as an App Message and are saved on the watch,
+so they hold without the phone.
+
+The play button beside the melody auditions the tune through the phone speaker
+using Web Audio. Saving also plays it once on the watch, which is the only 1:1
+preview: a config page can reach the watch solely by closing and handing its
+answer to PebbleKit JS, so nothing can be sent mid-session. The Save message
+carries a `PREVIEW` flag that tells the watch to play; ordinary settings pushes
+do not set it.
 
 - Page: `docs/index.html`, served by GitHub Pages at
   https://ctsstc.github.io/pebble-aeropress-timer/

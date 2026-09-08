@@ -114,7 +114,7 @@ function loadSettings(): Settings {
 let settings = loadSettings();
 
 const inbox: Message = new Message({
-	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY"],
+	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW"],
 	input: 96, // a handful of int tuples; the default is 8 KB each way
 	output: 32,
 	onReadable: () => {
@@ -134,6 +134,7 @@ const inbox: Message = new Message({
 		};
 		localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} melody=${settings.melody}`);
+		if (num("PREVIEW")) alert(); // Save on the phone plays the new choice once
 	},
 });
 

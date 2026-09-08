@@ -10,9 +10,10 @@ function loadSettings() {
   return null;
 }
 
-function toMessage(s) {
+function toMessage(s, preview) {
   var melody = MELODIES.indexOf(s.melody);
   return {
+    PREVIEW: preview ? 1 : 0,
     CHIME_ENABLED: s.chime ? 1 : 0,
     VIBE_ENABLED: s.vibe ? 1 : 0,
     CHIME_VOLUME: Number(s.volume),
@@ -21,8 +22,8 @@ function toMessage(s) {
   };
 }
 
-function send(s) {
-  Pebble.sendAppMessage(toMessage(s),
+function send(s, preview) {
+  Pebble.sendAppMessage(toMessage(s, preview),
     function () { console.log("settings sent to watch"); },
     function (err) { console.log("settings send failed: " + JSON.stringify(err)); });
 }
@@ -48,5 +49,5 @@ Pebble.addEventListener("webviewclosed", function (e) {
     return;
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  send(s);
+  send(s, true); // saving from the page also plays the chime on the watch
 });
