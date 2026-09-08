@@ -5,39 +5,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AeroPress Timer settings</title>
 <style>
-  :root { color-scheme: light dark; }
+  :root { color-scheme: light dark; --control-h: 40px; }
+  *, *::before, *::after { box-sizing: border-box; }
   body { margin: 0; padding: 24px 20px; font: 17px/1.4 -apple-system, system-ui, sans-serif; background: #111; color: #eee; }
-  h1 { font-size: 22px; margin: 0 0 20px; }
-  .row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #333; }
+  h1 { font-size: 22px; margin: 0 0 12px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; padding: 10px 0; border-bottom: 1px solid #333; }
   .row label { flex: 1; }
-  input[type=checkbox] { width: 24px; height: 24px; }
-  input[type=range] { width: 55%; }
-  input[type=number] { width: 5.5em; font-size: 16px; padding: 6px 8px; text-align: right; }
-  select { font-size: 16px; padding: 6px 8px; }
-  .chime-row select { flex: 1; margin-right: 10px; }
-  .play { border: 0; border-radius: 8px; background: #333; color: #ffaa00; font-size: 18px; width: 44px; height: 40px; }
+  input[type=checkbox] { flex: none; margin: 0; width: 24px; height: 24px; }
+  input[type=range] { margin: 0; width: 50%; }
+  input[type=number] { flex: none; width: 5.5em; height: var(--control-h); padding: 0 10px; font-size: 16px; text-align: right; }
+  select { height: var(--control-h); padding: 0 8px; font-size: 16px; }
+  .chime-row select { flex: 1; min-width: 0; }
+  .play { flex: none; margin: 0; padding: 0; width: var(--control-h); height: var(--control-h); display: inline-flex; align-items: center; justify-content: center; line-height: 1; font-size: 13px; border: 0; border-radius: 8px; background: #333; color: #ffaa00; }
   .play:active { background: #444; }
   .value { min-width: 3ch; text-align: right; color: #ffaa00; font-variant-numeric: tabular-nums; }
-  button { margin-top: 28px; width: 100%; padding: 14px; font-size: 18px; border: 0; border-radius: 10px; background: #ffaa00; color: #111; font-weight: 600; }
+  .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+  #save { width: 100%; padding: 14px; font-size: 18px; font-weight: 600; border: 0; border-radius: 10px; background: #ffaa00; color: #111; }
+  #reset { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #444; border-radius: 10px; background: transparent; color: #ccc; }
+  #reset:active { background: #1c1c1c; }
   .hint { color: #999; font-size: 14px; margin-top: 16px; }
 </style>
 </head>
 <body>
 <h1>AeroPress Timer</h1>
 <div class="row"><label for="chime">Chime at 0:00</label><input id="chime" type="checkbox"></div>
-<div class="row chime-row"><label for="melody">Chime</label><select id="melody"><option value="single">Single tone</option><option value="triple">Three notes</option><option value="teapot">Teapot</option><option value="kettle">Kettle whistle</option></select><button id="play" class="play" type="button" aria-label="Preview chime">&#9654;</button></div>
+<div class="row chime-row"><label for="melody">Chime</label><select id="melody"><option value="single">Single tone</option><option value="tada">Tada</option><option value="triple">Three notes</option><option value="teapot">Teapot</option><option value="kettle">Kettle whistle</option></select><button id="play" class="play" type="button" aria-label="Preview chime">&#9654;</button></div>
 <div class="row"><label for="vibe">Vibrate at 0:00</label><input id="vibe" type="checkbox"></div>
 <div class="row"><label for="touch">Tap screen to advance</label><input id="touch" type="checkbox"></div>
 <div class="row"><label for="volume">Chime volume</label><input id="volume" type="range" min="0" max="100" step="5"><span class="value" id="volumeValue"></span></div>
 <div class="row"><label for="steep1">First steep (seconds)</label><input id="steep1" type="number" min="5" max="600" step="5"></div>
 <div class="row"><label for="steep2">Second steep (seconds)</label><input id="steep2" type="number" min="5" max="600" step="5"></div>
-<button id="save">Save</button>
-<p class="hint">The play button previews the tune on this phone; the watch plays it for real when you save. The vibration follows the rhythm of the chosen chime. The chime stays silent while the watch is muted or in Quiet Time, whatever this says.</p>
+<div class="actions">
+  <button id="save" type="button">Save</button>
+  <button id="reset" type="button">Reset to defaults</button>
+</div>
+<p class="hint">The play button previews the tune on this phone; the watch plays it for real when you save. The vibration follows the rhythm of the chosen chime. The chime stays silent while the watch is muted or in Quiet Time, whatever this says. Reset fills the form with the stock values but changes nothing until you save.</p>
 <script>
 (function () {
   var params = new URLSearchParams(location.search);
   var returnTo = params.get("return_to") || "pebblejs://close#";
-  var settings = { chime: true, vibe: true, volume: 40, touch: true, melody: "kettle", steep1: 30, steep2: 90 };
+
+  var DEFAULTS = { chime: true, vibe: true, volume: 40, touch: true, melody: "kettle", steep1: 30, steep2: 90 };
+  var settings = Object.assign({}, DEFAULTS);
   try {
     var given = JSON.parse(params.get("settings"));
     if (given) settings = Object.assign(settings, given);
@@ -50,17 +59,33 @@
   var play = document.getElementById("play");
   var steep1 = document.getElementById("steep1");
   var steep2 = document.getElementById("steep2");
+  var volume = document.getElementById("volume");
+  var volumeValue = document.getElementById("volumeValue");
 
   // Mirror of MELODIES in src/embeddedjs/main.ts: [midi, ms] per note.
   var MELODIES = {
     single: [[79, 500]],
+    tada: [[79, 140], [84, 560]],
     triple: [[72, 120], [76, 120], [79, 120]],
     teapot: [[72, 280], [74, 280], [76, 140], [77, 140], [79, 280], [84, 420]],
     kettle: [[76, 90], [83, 90], [88, 340], [86, 100], [88, 300]]
   };
+
+  function apply(s) {
+    chime.checked = !!s.chime;
+    vibe.checked = !!s.vibe;
+    touch.checked = s.touch !== false;
+    melody.value = s.melody;
+    if (!melody.value) melody.value = DEFAULTS.melody;
+    steep1.value = s.steep1;
+    steep2.value = s.steep2;
+    volume.value = s.volume;
+    volumeValue.textContent = volume.value;
+  }
+
   var audio = null;
   function preview(name) {
-    var notes = MELODIES[name] || MELODIES.kettle;
+    var notes = MELODIES[name] || MELODIES[DEFAULTS.melody];
     try {
       audio = audio || new (window.AudioContext || window.webkitAudioContext)();
       if (audio.state === "suspended") audio.resume();
@@ -84,28 +109,28 @@
       });
     } catch (e) {}
   }
-  play.addEventListener("click", function () { preview(melody.value); });
-  var volume = document.getElementById("volume");
-  var volumeValue = document.getElementById("volumeValue");
 
-  chime.checked = !!settings.chime;
-  vibe.checked = !!settings.vibe;
-  touch.checked = settings.touch !== false;
-  melody.value = settings.melody;
-  if (!melody.value) melody.value = "kettle";
-  steep1.value = settings.steep1;
-  steep2.value = settings.steep2;
-  volume.value = settings.volume;
-  volumeValue.textContent = volume.value;
+  function seconds(field, fallback) {
+    var n = Math.round(Number(field.value));
+    if (!isFinite(n) || n < 5) n = fallback;
+    return Math.min(600, n);
+  }
+
+  apply(settings);
   volume.addEventListener("input", function () { volumeValue.textContent = volume.value; });
+  play.addEventListener("click", function () { preview(melody.value); });
+  document.getElementById("reset").addEventListener("click", function () { apply(DEFAULTS); });
 
   document.getElementById("save").addEventListener("click", function () {
-    function seconds(field, fallback) {
-      var n = Math.round(Number(field.value));
-      if (!isFinite(n) || n < 5) n = fallback;
-      return Math.min(600, n);
-    }
-    var out = { chime: chime.checked, vibe: vibe.checked, volume: Number(volume.value), touch: touch.checked, melody: melody.value, steep1: seconds(steep1, 30), steep2: seconds(steep2, 90) };
+    var out = {
+      chime: chime.checked,
+      vibe: vibe.checked,
+      volume: Number(volume.value),
+      touch: touch.checked,
+      melody: melody.value,
+      steep1: seconds(steep1, DEFAULTS.steep1),
+      steep2: seconds(steep2, DEFAULTS.steep2)
+    };
     location.href = returnTo + encodeURIComponent(JSON.stringify(out));
   });
 })();

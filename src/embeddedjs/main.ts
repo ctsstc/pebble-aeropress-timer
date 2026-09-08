@@ -29,8 +29,8 @@ const RECIPE: Step[] = [
 
 // Chime at 0:00. MIDI note numbers (60 = C4); the vibe pulses once per note in the same rhythm.
 // Which melody plays, the volume, and on/off live in settings.
-type Melody = "single" | "triple" | "teapot" | "kettle";
-const MELODY_ORDER: Melody[] = ["single", "triple", "teapot", "kettle"]; // CHIME_MELODY index, shared with src/pkjs/index.js
+type Melody = "single" | "triple" | "teapot" | "kettle" | "tada";
+const MELODY_ORDER: Melody[] = ["single", "tada", "triple", "teapot", "kettle"]; // CHIME_MELODY index, shared with src/pkjs/index.js
 
 interface Note {
 	midi: number;
@@ -39,6 +39,9 @@ interface Note {
 
 const MELODIES: Record<Melody, Note[]> = {
 	single: [{ midi: 79, ms: 500 }],
+	tada: [ // short pickup, then a held fourth above it
+		{ midi: 79, ms: 140 }, { midi: 84, ms: 560 },
+	],
 	triple: [{ midi: 72, ms: 120 }, { midi: 76, ms: 120 }, { midi: 79, ms: 120 }],
 	teapot: [ // a rising run that lands an octave up
 		{ midi: 72, ms: 280 }, { midi: 74, ms: 280 }, { midi: 76, ms: 140 },
