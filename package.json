@@ -23,7 +23,8 @@
     "messageKeys": [
       "CHIME_ENABLED",
       "VIBE_ENABLED",
-      "CHIME_VOLUME"
+      "CHIME_VOLUME",
+      "TOUCH_ENABLED"
     ],
     "resources": {
       "media": []

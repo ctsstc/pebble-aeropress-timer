@@ -50,7 +50,7 @@ let controller: AeroPressTimer | undefined;
 
 class TapBehavior extends Behavior {
 	onTouchEnded(_content: any): void {
-		controller?.next();
+		if (settings.touch) controller?.next();
 	}
 }
 
@@ -70,9 +70,10 @@ interface Settings {
 	chime: boolean;
 	vibe: boolean;
 	volume: number;
+	touch: boolean;
 }
 
-const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40 };
+const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true };
 const SETTINGS_KEY = "settings";
 
 function loadSettings(): Settings {
@@ -87,8 +88,8 @@ function loadSettings(): Settings {
 let settings = loadSettings();
 
 const inbox: Message = new Message({
-	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME"],
-	input: 64, // three int tuples; the default is 8 KB each way
+	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED"],
+	input: 96, // a handful of int tuples; the default is 8 KB each way
 	output: 32,
 	onReadable: () => {
 		const msg = inbox.read();
@@ -96,13 +97,15 @@ const inbox: Message = new Message({
 		const chime = num("CHIME_ENABLED");
 		const vibe = num("VIBE_ENABLED");
 		const volume = num("CHIME_VOLUME");
+		const touch = num("TOUCH_ENABLED");
 		settings = {
 			chime: chime === undefined ? settings.chime : chime !== 0,
 			vibe: vibe === undefined ? settings.vibe : vibe !== 0,
 			volume: volume === undefined ? settings.volume : Math.max(0, Math.min(100, volume)),
+			touch: touch === undefined ? settings.touch : touch !== 0,
 		};
 		localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume}`);
+		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch}`);
 	},
 });
 

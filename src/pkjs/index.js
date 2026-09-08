@@ -13,7 +13,8 @@ function toMessage(s) {
   return {
     CHIME_ENABLED: s.chime ? 1 : 0,
     VIBE_ENABLED: s.vibe ? 1 : 0,
-    CHIME_VOLUME: Number(s.volume)
+    CHIME_VOLUME: Number(s.volume),
+    TOUCH_ENABLED: s.touch === false ? 0 : 1
   };
 }
 

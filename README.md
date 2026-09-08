@@ -13,7 +13,7 @@ Default recipe: Setup, 30s steep, Stir, 90s steep, Flip & press, Done.
 | SELECT | Restart current step (re-arms its timer) |
 | DOWN   | Next step (any time, also skips a running timer) |
 | BACK   | Exit (system default) |
-| TAP    | Anywhere on screen = next step (touch-enabled firmware/SDK only) |
+| TAP    | Anywhere on screen = next step (touch-enabled firmware/SDK only; can be turned off in Settings) |
 
 On the last step, DOWN starts over from the top. The layout follows the
 Pebble convention of moving down through a list: down to progress, up to go
@@ -30,8 +30,9 @@ Both live at the top of `src/embeddedjs/main.ts`:
 ## Settings
 
 In the Pebble phone app, open AeroPress Timer and tap Settings. The page has
-chime on/off, vibration on/off, and chime volume. Values travel to the watch as
-an App Message and are saved on the watch, so they hold without the phone.
+chime on/off, vibration on/off, chime volume, and tap-to-advance on/off. Values
+travel to the watch as an App Message and are saved on the watch, so they hold
+without the phone.
 
 - Page: `docs/index.html`, served by GitHub Pages at
   https://ctsstc.github.io/pebble-aeropress-timer/
@@ -40,7 +41,8 @@ an App Message and are saved on the watch, so they hold without the phone.
   with `localStorage`.
 - Emulator: `pebble emu-app-config --emulator emery --file docs/index.html`
   drives the page, or push values directly:
-  `pebble send-app-message --emulator emery --int CHIME_ENABLED=0 VIBE_ENABLED=1 CHIME_VOLUME=70`
+  `pebble send-app-message --emulator emery --int 10000=0 10001=1 10002=70`
+  (numeric keys in `build/appinfo.json` order: chime, vibe, volume, touch, ...)
 
 ## Chime
 

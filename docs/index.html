@@ -21,6 +21,7 @@
 <h1>AeroPress Timer</h1>
 <div class="row"><label for="chime">Chime at 0:00</label><input id="chime" type="checkbox"></div>
 <div class="row"><label for="vibe">Vibrate at 0:00</label><input id="vibe" type="checkbox"></div>
+<div class="row"><label for="touch">Tap screen to advance</label><input id="touch" type="checkbox"></div>
 <div class="row"><label for="volume">Chime volume</label><input id="volume" type="range" min="0" max="100" step="5"><span class="value" id="volumeValue"></span></div>
 <button id="save">Save</button>
 <p class="hint">The chime stays silent while the watch is muted or in Quiet Time, whatever this says.</p>
@@ -28,7 +29,7 @@
 (function () {
   var params = new URLSearchParams(location.search);
   var returnTo = params.get("return_to") || "pebblejs://close#";
-  var settings = { chime: true, vibe: true, volume: 40 };
+  var settings = { chime: true, vibe: true, volume: 40, touch: true };
   try {
     var given = JSON.parse(params.get("settings"));
     if (given) settings = Object.assign(settings, given);
@@ -36,17 +37,19 @@
 
   var chime = document.getElementById("chime");
   var vibe = document.getElementById("vibe");
+  var touch = document.getElementById("touch");
   var volume = document.getElementById("volume");
   var volumeValue = document.getElementById("volumeValue");
 
   chime.checked = !!settings.chime;
   vibe.checked = !!settings.vibe;
+  touch.checked = settings.touch !== false;
   volume.value = settings.volume;
   volumeValue.textContent = volume.value;
   volume.addEventListener("input", function () { volumeValue.textContent = volume.value; });
 
   document.getElementById("save").addEventListener("click", function () {
-    var out = { chime: chime.checked, vibe: vibe.checked, volume: Number(volume.value) };
+    var out = { chime: chime.checked, vibe: vibe.checked, volume: Number(volume.value), touch: touch.checked };
     location.href = returnTo + encodeURIComponent(JSON.stringify(out));
   });
 })();
