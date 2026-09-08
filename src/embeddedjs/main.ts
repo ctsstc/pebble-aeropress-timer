@@ -40,9 +40,9 @@ const COLOR_DONE = "#00FF00"; // green at 0:00
 const bgSkin        = new Skin({ fill: COLOR_BG });
 const stepNumStyle  = new Style({ font: "18px Gothic",      color: COLOR_DIM,  horizontal: "center" });
 const nameStyle     = new Style({ font: "bold 36px Gothic", color: COLOR_TEXT, horizontal: "center" });
-const timeStyle     = new Style({ font: "bold 42px Bitham", color: COLOR_TIME, horizontal: "center" });
-const timeDoneStyle = new Style({ font: "bold 42px Bitham", color: COLOR_DONE, horizontal: "center" });
-const timeIdleStyle = new Style({ font: "bold 42px Bitham", color: COLOR_DIM,  horizontal: "center" });
+const timeStyle     = new Style({ font: "bold 49px Roboto", color: COLOR_TIME, horizontal: "center" });
+const timeDoneStyle = new Style({ font: "bold 49px Roboto", color: COLOR_DONE, horizontal: "center" });
+const timeIdleStyle = new Style({ font: "bold 42px Bitham", color: COLOR_DIM,  horizontal: "center" }); // Roboto 49 has no hyphen glyph
 const instrStyle    = new Style({ font: "bold 24px Gothic", color: COLOR_TEXT, horizontal: "center" });
 const hintStyle     = new Style({ font: "18px Gothic",      color: COLOR_DIM,  horizontal: "center" });
 
