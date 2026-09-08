@@ -1,5 +1,6 @@
 var CONFIG_URL = "https://ctsstc.github.io/pebble-aeropress-timer/";
 var STORAGE_KEY = "settings";
+var MELODIES = ["single", "triple", "teapot"]; // CHIME_MELODY index, shared with main.ts
 
 function loadSettings() {
   try {
@@ -10,11 +11,13 @@ function loadSettings() {
 }
 
 function toMessage(s) {
+  var melody = MELODIES.indexOf(s.melody);
   return {
     CHIME_ENABLED: s.chime ? 1 : 0,
     VIBE_ENABLED: s.vibe ? 1 : 0,
     CHIME_VOLUME: Number(s.volume),
-    TOUCH_ENABLED: s.touch === false ? 0 : 1
+    TOUCH_ENABLED: s.touch === false ? 0 : 1,
+    CHIME_MELODY: melody < 0 ? 2 : melody
   };
 }
 

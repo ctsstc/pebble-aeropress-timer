@@ -26,8 +26,24 @@ const RECIPE: Step[] = [
 	{ name: "DONE",  seconds: 0,  instr: "Enjoy your coffee!" },
 ];
 
-// Chime at 0:00, alongside the vibe. MIDI note numbers (60 = C4). Volume and on/off live in settings.
-const CHIME = { notes: [72, 76, 79], noteMs: 120 };
+// Chime at 0:00. MIDI note numbers (60 = C4); the vibe pulses once per note in the same rhythm.
+// Which melody plays, the volume, and on/off live in settings.
+type Melody = "single" | "triple" | "teapot";
+const MELODY_ORDER: Melody[] = ["single", "triple", "teapot"]; // CHIME_MELODY index, shared with src/pkjs/index.js
+
+interface Note {
+	midi: number;
+	ms: number;
+}
+
+const MELODIES: Record<Melody, Note[]> = {
+	single: [{ midi: 79, ms: 500 }],
+	triple: [{ midi: 72, ms: 120 }, { midi: 76, ms: 120 }, { midi: 79, ms: 120 }],
+	teapot: [ // "I'm a lit-tle tea-pot"
+		{ midi: 72, ms: 280 }, { midi: 74, ms: 280 }, { midi: 76, ms: 140 },
+		{ midi: 77, ms: 140 }, { midi: 79, ms: 280 }, { midi: 84, ms: 420 },
+	],
+};
 // ----------------------------------------------------------------------------
 
 // 64-color display: stick to palette-aligned values (00 / 55 / AA / FF per channel)
@@ -71,15 +87,20 @@ interface Settings {
 	vibe: boolean;
 	volume: number;
 	touch: boolean;
+	melody: Melody;
 }
 
-const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true };
+const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, melody: "teapot" };
 const SETTINGS_KEY = "settings";
 
 function loadSettings(): Settings {
 	try {
 		const raw = localStorage.getItem(SETTINGS_KEY);
-		if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+		if (raw) {
+			const saved: Settings = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+			if (!MELODY_ORDER.includes(saved.melody)) saved.melody = DEFAULT_SETTINGS.melody;
+			return saved;
+		}
 	}
 	catch {}
 	return { ...DEFAULT_SETTINGS };
@@ -88,7 +109,7 @@ function loadSettings(): Settings {
 let settings = loadSettings();
 
 const inbox: Message = new Message({
-	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED"],
+	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY"],
 	input: 96, // a handful of int tuples; the default is 8 KB each way
 	output: 32,
 	onReadable: () => {
@@ -98,36 +119,55 @@ const inbox: Message = new Message({
 		const vibe = num("VIBE_ENABLED");
 		const volume = num("CHIME_VOLUME");
 		const touch = num("TOUCH_ENABLED");
+		const melody = num("CHIME_MELODY");
 		settings = {
 			chime: chime === undefined ? settings.chime : chime !== 0,
 			vibe: vibe === undefined ? settings.vibe : vibe !== 0,
 			volume: volume === undefined ? settings.volume : Math.max(0, Math.min(100, volume)),
 			touch: touch === undefined ? settings.touch : touch !== 0,
+			melody: melody === undefined ? settings.melody : (MELODY_ORDER[melody] ?? settings.melody),
 		};
 		localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch}`);
+		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} melody=${settings.melody}`);
 	},
 });
 
 // FFI bindings from src/c/chime.c. All three are absent when the mod was built without FFI.
 declare const Natives: {
 	chime_muted?(): number;
-	chime_set_note?(index: number, midi: number): number;
-	chime_play?(count: number, durationMs: number, volume: number): number;
+	chime_set_note?(index: number, midi: number, durationMs: number): number;
+	chime_play?(count: number, volume: number): number;
 } | undefined;
 
-function chime(): void {
-	if (!settings.chime) return;
+function chime(melody: Note[]): boolean {
 	try {
-		if (typeof Natives === "undefined" || !Natives.chime_muted || !Natives.chime_set_note || !Natives.chime_play) return;
-		if (Natives.chime_muted()) return;
-		for (let i = 0; i < CHIME.notes.length; i++)
-			Natives.chime_set_note(i, CHIME.notes[i]);
-		Natives.chime_play(CHIME.notes.length, CHIME.noteMs, settings.volume);
+		if (typeof Natives === "undefined" || !Natives.chime_muted || !Natives.chime_set_note || !Natives.chime_play) return false;
+		if (Natives.chime_muted()) return false;
+		for (let i = 0; i < melody.length; i++)
+			Natives.chime_set_note(i, melody[i].midi, melody[i].ms);
+		return 0 !== Natives.chime_play(melody.length, settings.volume);
 	}
 	catch {
-		// Speaker unavailable: the vibe is the alert.
+		return false; // Speaker unavailable: the vibe is the alert.
 	}
+}
+
+// [on, off, on, off, ...] in ms. Pulses under 150 ms barely register on the wrist.
+const VIBE_GAP_MS = 60;
+function vibePattern(melody: Note[]): number[] {
+	const pattern: number[] = [];
+	for (const note of melody) {
+		if (pattern.length) pattern.push(VIBE_GAP_MS);
+		pattern.push(Math.max(note.ms - VIBE_GAP_MS, 150));
+	}
+	return pattern;
+}
+
+function alert(): void {
+	const melody = MELODIES[settings.melody];
+	if (settings.vibe) Vibes.pattern(vibePattern(melody));
+	const played = settings.chime && chime(melody);
+	console.log(`alert: melody=${settings.melody} vibe=${settings.vibe} chime=${settings.chime} played=${played}`);
 }
 
 function formatTime(totalSeconds: number): string {
@@ -204,8 +244,7 @@ class AeroPressTimer {
 			this.stopTicker();
 			this.ui.TIME.style = timeDoneStyle;
 			this.ui.INSTR.string = "Time! DN for next step.";
-			if (settings.vibe) Vibes.doublePulse();
-			chime();
+			alert();
 		}
 	}
 

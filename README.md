@@ -24,13 +24,15 @@ back, middle to act on the current step.
 Both live at the top of `src/embeddedjs/main.ts`:
 
 - `RECIPE`: the steps. `seconds: 0` = untimed step (shows `--:--`, waits for DOWN).
-- `CHIME`: notes played at 0:00 (MIDI numbers, 60 = C4) and note length in ms.
-  Default is C5, E5, G5 at 120 ms each. Volume and on/off are settings.
+- `MELODIES`: the three chime options (MIDI numbers, 60 = C4, and ms per
+  note). The vibration pulses once per note in the same rhythm. Which one
+  plays, the volume, and on/off are settings.
 
 ## Settings
 
 In the Pebble phone app, open AeroPress Timer and tap Settings. The page has
-chime on/off, vibration on/off, chime volume, and tap-to-advance on/off. Values
+chime on/off, chime melody (single tone, three notes, or the teapot phrase),
+vibration on/off, chime volume, and tap-to-advance on/off. Values
 travel to the watch as an App Message and are saved on the watch, so they hold
 without the phone.
 
@@ -46,8 +48,11 @@ without the phone.
 
 ## Chime
 
-Timed steps play a short ascending chirp through the speaker in addition to the
-double-pulse vibe. Either can be turned off in Settings. The chime is also
+Timed steps play a chime through the speaker while the vibe pulses in the same
+rhythm. The default is the opening phrase of "I'm a Little Teapot"; Settings
+can switch to a single tone or a three-note chirp, or turn either alert off.
+That phrase comes from a 1939 song that stays under US copyright until 2035,
+which only matters if this is ever published to the app store. The chime is also
 skipped when the watch is muted (Settings > Sounds & Haptics) or Quiet Time is
 active, and it silently does nothing if the speaker API is unavailable.
 

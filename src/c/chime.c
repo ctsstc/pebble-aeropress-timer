@@ -15,27 +15,26 @@ int32_t chime_muted(void) {
   return speaker_is_muted() ? 1 : 0;
 }
 
-int32_t chime_set_note(uint32_t index, uint32_t midi) {
-  if (index >= CHIME_MAX_NOTES || midi > 127) return 0;
-  s_notes[index].midi_note = (uint8_t)midi;
+int32_t chime_set_note(uint32_t index, uint32_t midi, uint32_t duration_ms) {
+  if (index >= CHIME_MAX_NOTES || midi > 127 || duration_ms > 10000) return 0;
+  s_notes[index] = (SpeakerNote){
+    .midi_note = (uint8_t)midi,
+    .waveform = SpeakerWaveformSine,
+    .duration_ms = (uint16_t)duration_ms,
+    .velocity = 0,
+  };
   return 1;
 }
 
-int32_t chime_play(uint32_t count, uint32_t duration_ms, uint32_t volume) {
-  if (count == 0 || count > CHIME_MAX_NOTES || duration_ms > 10000 || volume > 100) return 0;
-  for (uint32_t i = 0; i < count; i++) {
-    s_notes[i].waveform = SpeakerWaveformSine;
-    s_notes[i].duration_ms = (uint16_t)duration_ms;
-    s_notes[i].velocity = 0;
-    s_notes[i].reserved = 0;
-  }
+int32_t chime_play(uint32_t count, uint32_t volume) {
+  if (count == 0 || count > CHIME_MAX_NOTES || volume > 100) return 0;
   return speaker_play_notes(s_notes, count, (uint8_t)volume) ? 1 : 0;
 }
 
 #else
 
 int32_t chime_muted(void) { return 1; }
-int32_t chime_set_note(uint32_t index, uint32_t midi) { return 0; }
-int32_t chime_play(uint32_t count, uint32_t duration_ms, uint32_t volume) { return 0; }
+int32_t chime_set_note(uint32_t index, uint32_t midi, uint32_t duration_ms) { return 0; }
+int32_t chime_play(uint32_t count, uint32_t volume) { return 0; }
 
 #endif
