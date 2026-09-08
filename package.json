@@ -33,7 +33,12 @@
       "SIMPLE_STEPS"
     ],
     "resources": {
-      "media": []
+      "media": [
+        { "type": "bitmap", "name": "IMG_PRESS", "file": "img/press.png" },
+        { "type": "bitmap", "name": "IMG_PRESS_MUG", "file": "img/press-mug.png" },
+        { "type": "bitmap", "name": "IMG_MUG", "file": "img/mug.png" },
+        { "type": "bitmap", "name": "IMG_MUG_B", "file": "img/mug-b.png" }
+      ]
     }
   }
 }

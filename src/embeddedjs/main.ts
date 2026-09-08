@@ -67,13 +67,28 @@ const timeStyle     = new Style({ font: "bold 49px Roboto", color: COLOR_TIME, h
 const timeDoneStyle = new Style({ font: "bold 49px Roboto", color: COLOR_DONE, horizontal: "center", vertical: "middle" });
 const timeIdleStyle = new Style({ font: "bold 42px Bitham", color: COLOR_DIM,  horizontal: "center", vertical: "middle" }); // Roboto 49 has no hyphen glyph
 const instrStyle    = new Style({ font: "bold 24px Gothic", color: COLOR_TEXT, horizontal: "center" });
+const instrArtStyle = new Style({ font: "bold 18px Gothic", color: COLOR_TEXT, horizontal: "center" });
 const footStyle     = new Style({ font: "18px Gothic",      color: COLOR_DIM,  horizontal: "center", vertical: "middle" });
 const railStyle     = new Style({ font: "bold 24px Gothic", color: COLOR_DIM,  horizontal: "center" });
 const railSkin      = new Skin({ fill: COLOR_DIM });
 
+// Piu on Pebble accepts a numeric resource id; the typings only describe the string form.
+const PebbleTexture = Texture as unknown as { new (resourceId: number): any };
+
+const artSkin = (id: number): any => {
+	const texture = new PebbleTexture(id);
+	return new Skin({ texture, width: texture.width, height: texture.height });
+};
+const pressSkin    = artSkin(1);
+const pressMugSkin = artSkin(2);
+const mugSkin      = artSkin(3);
+const mugSkinB     = artSkin(4);
+
 // A thin overlay down the right edge naming each tap zone, lined up with the
 // physical buttons. The zones themselves are full-width thirds of the screen.
 const RAIL_W = 22;
+const ART_W = 46;
+const ART_H = 150;
 const FOOT_H = 22;
 const TIME_H = 58;
 const TIME_TOP = Math.round((screen.height - TIME_H) / 2); // the countdown is pinned to the centre
@@ -114,9 +129,10 @@ class TapBehavior extends Behavior {
 const AeroApplication = Application.template(($: any) => ({
 	skin: bgSkin, active: true, Behavior: TapBehavior,
 	contents: [
-		Label($, { anchor: "NAME",  left: INSET, right: INSET, top: NAME_TOP,  height: NAME_H,  style: nameStyle,  string: "" }),
-		Label($, { anchor: "TIME",  left: INSET, right: INSET, top: TIME_TOP,  height: TIME_H,  style: timeStyle,  string: "" }),
-		Text($,  { anchor: "INSTR", left: INSET, right: INSET, top: INSTR_TOP, height: INSTR_H, style: instrStyle, string: "" }),
+		Content($, { anchor: "ART", left: 0, width: ART_W, top: Math.round((screen.height - ART_H) / 2), height: ART_H, skin: pressSkin }),
+		Label($, { anchor: "NAME",  left: ART_W, right: INSET, top: NAME_TOP,  height: NAME_H,  style: nameStyle,  string: "" }),
+		Label($, { anchor: "TIME",  left: ART_W, right: INSET, top: TIME_TOP,  height: TIME_H,  style: timeStyle,  string: "" }),
+		Text($,  { anchor: "INSTR", left: ART_W, right: INSET, top: INSTR_TOP, height: INSTR_H, style: instrArtStyle, string: "" }),
 		Label($, { anchor: "FOOT",  left: 0,     right: 0,     bottom: 2,     height: FOOT_H,  style: footStyle,  string: "" }),
 		Container($, { anchor: "RAIL", right: 0, width: RAIL_W, top: 0, bottom: 0, contents: [
 			...RailArrow($, true, 0),
@@ -315,6 +331,7 @@ class AeroPressTimer {
 		const step = this.steps[i];
 		const seconds = step.time ? settings[step.time] : step.seconds;
 
+		this.ui.ART.skin = (step.name === "DONE") ? mugSkin : (step.name === "PRESS") ? pressMugSkin : pressSkin;
 		this.ui.NAME.string = step.name;
 		this.ui.INSTR.string = (step.time === "steep" && Math.random() < EASTER_EGG_CHANCE)
 			? "Wait for it..."
