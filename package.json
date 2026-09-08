@@ -34,10 +34,13 @@
     ],
     "resources": {
       "media": [
+        { "type": "bitmap", "name": "IMG_POUR", "file": "img/pour.png" },
+        { "type": "bitmap", "name": "IMG_BLOOM", "file": "img/bloom.png" },
+        { "type": "bitmap", "name": "IMG_STIR", "file": "img/stir.png" },
+        { "type": "bitmap", "name": "IMG_STEEP", "file": "img/steep.png" },
         { "type": "bitmap", "name": "IMG_PRESS", "file": "img/press.png" },
-        { "type": "bitmap", "name": "IMG_PRESS_MUG", "file": "img/press-mug.png" },
-        { "type": "bitmap", "name": "IMG_MUG", "file": "img/mug.png" },
-        { "type": "bitmap", "name": "IMG_MUG_B", "file": "img/mug-b.png" }
+        { "type": "bitmap", "name": "IMG_DONE", "file": "img/done.png" },
+        { "type": "bitmap", "name": "IMG_DONE_B", "file": "img/done-b.png" }
       ]
     }
   }

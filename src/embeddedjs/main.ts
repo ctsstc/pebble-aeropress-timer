@@ -79,10 +79,16 @@ const artSkin = (id: number): any => {
 	const texture = new PebbleTexture(id);
 	return new Skin({ texture, width: texture.width, height: texture.height });
 };
-const pressSkin    = artSkin(1);
-const pressMugSkin = artSkin(2);
-const mugSkin      = artSkin(3);
-const mugSkinB     = artSkin(4);
+// Keyed by step name so an edited recipe still finds its picture.
+const ART: Record<string, any> = {
+	POUR:  artSkin(1),
+	BLOOM: artSkin(2),
+	STIR:  artSkin(3),
+	STEEP: artSkin(4),
+	PRESS: artSkin(5),
+	DONE:  artSkin(6),
+};
+const ART_FALLBACK = ART.STEEP;
 
 // A thin overlay down the right edge naming each tap zone, lined up with the
 // physical buttons. The zones themselves are full-width thirds of the screen.
@@ -129,7 +135,7 @@ class TapBehavior extends Behavior {
 const AeroApplication = Application.template(($: any) => ({
 	skin: bgSkin, active: true, Behavior: TapBehavior,
 	contents: [
-		Content($, { anchor: "ART", left: 0, width: ART_W, top: Math.round((screen.height - ART_H) / 2), height: ART_H, skin: pressSkin }),
+		Content($, { anchor: "ART", left: 0, width: ART_W, top: Math.round((screen.height - ART_H) / 2), height: ART_H, skin: ART_FALLBACK }),
 		Label($, { anchor: "NAME",  left: ART_W, right: INSET, top: NAME_TOP,  height: NAME_H,  style: nameStyle,  string: "" }),
 		Label($, { anchor: "TIME",  left: ART_W, right: INSET, top: TIME_TOP,  height: TIME_H,  style: timeStyle,  string: "" }),
 		Text($,  { anchor: "INSTR", left: ART_W, right: INSET, top: INSTR_TOP, height: INSTR_H, style: instrArtStyle, string: "" }),
@@ -331,7 +337,7 @@ class AeroPressTimer {
 		const step = this.steps[i];
 		const seconds = step.time ? settings[step.time] : step.seconds;
 
-		this.ui.ART.skin = (step.name === "DONE") ? mugSkin : (step.name === "PRESS") ? pressMugSkin : pressSkin;
+		this.ui.ART.skin = ART[step.name] ?? ART_FALLBACK;
 		this.ui.NAME.string = step.name;
 		this.ui.INSTR.string = (step.time === "steep" && Math.random() < EASTER_EGG_CHANCE)
 			? "Wait for it..."
