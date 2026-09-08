@@ -79,16 +79,38 @@ const artSkin = (id: number): any => {
 	const texture = new PebbleTexture(id);
 	return new Skin({ texture, width: texture.width, height: texture.height });
 };
-// Keyed by step name so an edited recipe still finds its picture.
-const ART: Record<string, any> = {
-	POUR:  artSkin(1),
-	BLOOM: artSkin(2),
-	STIR:  artSkin(3),
-	STEEP: artSkin(4),
-	PRESS: artSkin(5),
-	DONE:  artSkin(6),
+const outlineSkin = artSkin(1);
+const cupOnlySkin = artSkin(2);
+const steamSkins  = [artSkin(3), artSkin(4)];
+const liquidSkin  = new Skin({ fill: COLOR_TIME });
+const partSkin    = new Skin({ fill: COLOR_DIM });
+
+// Geometry inside the art column. Liquid sits within the strokes so they stay visible.
+const CH_X = 10, CH_W = 25, CH_BOTTOM = 87, CH_SPAN = 75;
+const CUP_X = 8, CUP_W = 21, CUP_BOTTOM = 139, CUP_SPAN = 35;
+const PLUNGE_TRAVEL = 54;
+const STEAM_MAX_MS = 3 * 60 * 1000; // then the cup has gone cold
+const ART_TWEEN_MS = 700;
+const SETTLE_MS = 1400;
+
+interface ArtState {
+	chamber: number;
+	cup: number;
+	plunger: number;
+	stirrer: boolean;
+	steam: boolean;
+	vessel: boolean;
+}
+
+const ART_STATES: Record<string, ArtState> = {
+	POUR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true },
+	BLOOM: { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true },
+	STIR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: true,  steam: false, vessel: true },
+	STEEP: { chamber: 0.95, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true },
+	PRESS: { chamber: 0.12, cup: 0.6,  plunger: 0.8, stirrer: false, steam: false, vessel: true },
+	DONE:  { chamber: 0,    cup: 0.85, plunger: 0,   stirrer: false, steam: true,  vessel: false },
 };
-const ART_FALLBACK = ART.STEEP;
+const ART_EMPTY: ArtState = { chamber: 0, cup: 0, plunger: 0, stirrer: false, steam: false, vessel: true };
 
 // A thin overlay down the right edge naming each tap zone, lined up with the
 // physical buttons. The zones themselves are full-width thirds of the screen.
@@ -135,7 +157,15 @@ class TapBehavior extends Behavior {
 const AeroApplication = Application.template(($: any) => ({
 	skin: bgSkin, active: true, Behavior: TapBehavior,
 	contents: [
-		Content($, { anchor: "ART", left: 0, width: ART_W, top: Math.round((screen.height - ART_H) / 2), height: ART_H, skin: ART_FALLBACK }),
+		Container($, { anchor: "ART", left: 0, width: ART_W, top: Math.round((screen.height - ART_H) / 2), height: ART_H, contents: [
+			Content($,  { anchor: "OUTLINE", left: 0, width: ART_W, top: 0, height: ART_H, skin: outlineSkin }),
+			Content($,  { anchor: "CH_LIQ",  left: CH_X,  width: CH_W,  top: CH_BOTTOM,  height: 0, skin: liquidSkin }),
+			Content($,  { anchor: "CUP_LIQ", left: CUP_X, width: CUP_W, top: CUP_BOTTOM, height: 0, skin: liquidSkin }),
+			Content($,  { anchor: "PL_STEM", left: 18, width: 9,  top: 8, height: 0, skin: partSkin }),
+			Content($,  { anchor: "PL_KNOB", left: 8,  width: 29, top: 0, height: 8, skin: partSkin }),
+			Content($,  { anchor: "STIRRER", left: 21, width: 4,  top: 0, height: 64, skin: partSkin }),
+			Content($,  { anchor: "STEAM",   left: 0, width: ART_W, top: 76, height: 22, skin: steamSkins[0] }),
+		]}),
 		Label($, { anchor: "NAME",  left: ART_W, right: INSET, top: NAME_TOP,  height: NAME_H,  style: nameStyle,  string: "" }),
 		Label($, { anchor: "TIME",  left: ART_W, right: INSET, top: TIME_TOP,  height: TIME_H,  style: timeStyle,  string: "" }),
 		Text($,  { anchor: "INSTR", left: ART_W, right: INSET, top: INSTR_TOP, height: INSTR_H, style: instrArtStyle, string: "" }),
@@ -288,6 +318,10 @@ function formatTime(totalSeconds: number): string {
 class AeroPressTimer {
 	private index = 0;
 	private steps: Step[] = activeRecipe();
+	private art: ArtState = ART_EMPTY;
+	private artTween: ReturnType<typeof setInterval> | undefined;
+	private artSteam: ReturnType<typeof setInterval> | undefined;
+	private settle: ReturnType<typeof setTimeout> | undefined;
 	private startTicks = 0;
 	private durationMs = 0;
 	private ticker: ReturnType<typeof setInterval> | undefined;
@@ -306,6 +340,98 @@ class AeroPressTimer {
 		});
 		this.applyChrome();
 		this.enterStep(0);
+	}
+
+	private applyArt(a: ArtState): void {
+		const ui = this.ui;
+		ui.OUTLINE.skin = a.vessel ? outlineSkin : cupOnlySkin;
+
+		const chH = Math.round(CH_SPAN * a.chamber);
+		ui.CH_LIQ.visible = a.vessel && chH > 0;
+		if (chH > 0)
+			ui.CH_LIQ.coordinates = { left: CH_X, width: CH_W, top: CH_BOTTOM - chH, height: chH };
+
+		const cupH = Math.round(CUP_SPAN * a.cup);
+		ui.CUP_LIQ.visible = cupH > 0;
+		if (cupH > 0)
+			ui.CUP_LIQ.coordinates = { left: CUP_X, width: CUP_W, top: CUP_BOTTOM - cupH, height: cupH };
+
+		const knobTop = Math.round(PLUNGE_TRAVEL * a.plunger);
+		const stemTop = knobTop + 8;
+		const surface = CH_BOTTOM - chH;
+		ui.PL_KNOB.visible = a.plunger > 0.01;
+		ui.PL_STEM.visible = a.plunger > 0.01 && surface > stemTop;
+		if (a.plunger > 0.01) {
+			ui.PL_KNOB.coordinates = { left: 8, width: 29, top: knobTop, height: 8 };
+			if (surface > stemTop)
+				ui.PL_STEM.coordinates = { left: 18, width: 9, top: stemTop, height: surface - stemTop };
+		}
+
+		ui.STIRRER.visible = a.stirrer;
+		ui.STEAM.visible = a.steam;
+	}
+
+	setArt(target: ArtState, animate: boolean): void {
+		this.stopArtTimers();
+		if (!animate) {
+			this.art = target;
+			this.applyArt(target);
+			if (target.steam) this.startSteam();
+			return;
+		}
+		const from = this.art;
+		const start = Time.ticks;
+		this.artTween = setInterval(() => {
+			const t = Math.min(1, Time.delta(start) / ART_TWEEN_MS);
+			const mix = (a: number, b: number): number => a + (b - a) * t;
+			this.applyArt({
+				chamber: mix(from.chamber, target.chamber),
+				cup: mix(from.cup, target.cup),
+				plunger: mix(from.plunger, target.plunger),
+				stirrer: target.stirrer,
+				steam: false,
+				vessel: t < 1 ? (from.vessel || target.vessel) : target.vessel,
+			});
+			if (t >= 1) {
+				this.stopArtTween();
+				this.art = target;
+				this.applyArt(target);
+				if (target.steam) this.startSteam();
+			}
+		}, 50);
+	}
+
+	private startSteam(): void {
+		const started = Time.ticks;
+		let frame = 0;
+		this.artSteam = setInterval(() => {
+			if (Time.delta(started) > STEAM_MAX_MS) {
+				this.stopSteam();
+				this.ui.STEAM.visible = false;
+				return;
+			}
+			frame ^= 1;
+			this.ui.STEAM.skin = steamSkins[frame];
+		}, 500);
+	}
+
+	private stopArtTween(): void {
+		if (undefined !== this.artTween) {
+			clearInterval(this.artTween);
+			this.artTween = undefined;
+		}
+	}
+
+	private stopSteam(): void {
+		if (undefined !== this.artSteam) {
+			clearInterval(this.artSteam);
+			this.artSteam = undefined;
+		}
+	}
+
+	private stopArtTimers(): void {
+		this.stopArtTween();
+		this.stopSteam();
 	}
 
 	applyChrome(): void {
@@ -333,11 +459,12 @@ class AeroPressTimer {
 
 	private enterStep(i: number): void {
 		this.stopTicker();
+		this.stopSettle();
 		this.index = i;
 		const step = this.steps[i];
 		const seconds = step.time ? settings[step.time] : step.seconds;
 
-		this.ui.ART.skin = ART[step.name] ?? ART_FALLBACK;
+		this.setArt(ART_STATES[step.name] ?? ART_EMPTY, true);
 		this.ui.NAME.string = step.name;
 		this.ui.INSTR.string = (step.time === "steep" && Math.random() < EASTER_EGG_CHANCE)
 			? "Wait for it..."
@@ -373,7 +500,18 @@ class AeroPressTimer {
 			this.ui.INSTR.string = (this.index === this.steps.length - 1)
 				? "Time! Enjoy your cup."
 				: skipped ? `Time! ${skipped}.` : "Time! DN for next step.";
+			if (this.index === this.steps.length - 1) {
+				this.setArt(ART_STATES.PRESS, true);
+				this.settle = setTimeout(() => this.setArt(ART_STATES.DONE, true), SETTLE_MS);
+			}
 			alert();
+		}
+	}
+
+	private stopSettle(): void {
+		if (undefined !== this.settle) {
+			clearTimeout(this.settle);
+			this.settle = undefined;
 		}
 	}
 
