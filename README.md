@@ -13,7 +13,7 @@ Default recipe: Setup, 30s steep, Stir, 90s steep, Flip & press, Done.
 | SELECT | Restart current step (re-arms its timer) |
 | DOWN   | Next step (any time, also skips a running timer) |
 | BACK   | Exit (system default) |
-| TAP    | Anywhere on screen = next step (touch-enabled firmware/SDK only; can be turned off in Settings) |
+| TAP    | Zones mirror the buttons: top third = back, middle = reset, bottom = next (touch-enabled firmware/SDK only; can be turned off in Settings) |
 
 On the last step, DOWN starts over from the top. The layout follows the
 Pebble convention of moving down through a list: down to progress, up to go

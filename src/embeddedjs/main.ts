@@ -64,9 +64,14 @@ const hintStyle     = new Style({ font: "18px Gothic",      color: COLOR_DIM,  h
 
 let controller: AeroPressTimer | undefined;
 
+// Tap zones mirror the buttons beside the screen: top third = back, middle = reset, bottom = next.
 class TapBehavior extends Behavior {
-	onTouchEnded(_content: any): void {
-		if (settings.touch) controller?.next();
+	onTouchEnded(_content: any, _id: number, _x: number, y: number): void {
+		if (!settings.touch || !controller) return;
+		const zone = Math.min(2, Math.floor((3 * y) / screen.height));
+		if (zone === 0) controller.previous();
+		else if (zone === 1) controller.restartStep();
+		else controller.next();
 	}
 }
 
@@ -202,12 +207,12 @@ class AeroPressTimer {
 		this.enterStep(this.index >= last ? 0 : this.index + 1);
 	}
 
-	private previous(): void {
+	previous(): void {
 		if (this.index > 0)
 			this.enterStep(this.index - 1);
 	}
 
-	private restartStep(): void {
+	restartStep(): void {
 		this.enterStep(this.index);
 	}
 
