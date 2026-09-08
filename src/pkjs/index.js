@@ -1,5 +1,6 @@
 var CONFIG_URL = "https://ctsstc.github.io/pebble-aeropress-timer/";
 var STORAGE_KEY = "settings";
+var GRAPHICS = ["none", "static", "animated"]; // GRAPHICS index, shared with main.ts
 var MELODIES = ["single", "tada", "triple", "teapot", "kettle"]; // CHIME_MELODY index, shared with main.ts
 
 function loadSettings() {
@@ -20,6 +21,7 @@ function toMessage(s, preview) {
     TOUCH_ENABLED: s.touch === false ? 0 : 1,
     RAIL_ICONS: s.railIcons === false ? 0 : 1,
     SIMPLE_STEPS: s.simplified ? 1 : 0,
+    GRAPHICS: GRAPHICS.indexOf(s.graphics) < 0 ? 2 : GRAPHICS.indexOf(s.graphics),
     CHIME_MELODY: melody < 0 ? 4 : melody,
     BLOOM_SECONDS: Number(s.bloom !== undefined ? s.bloom : s.steep1) || 30,
     STEEP_SECONDS: Number(s.steep !== undefined ? s.steep : s.steep2) || 90

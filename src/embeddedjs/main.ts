@@ -29,6 +29,9 @@ const RECIPE: Step[] = [
 
 // Chime at 0:00. MIDI note numbers (60 = C4); the vibe pulses once per note in the same rhythm.
 // Which melody plays, the volume, and on/off live in settings.
+type Graphics = "none" | "static" | "animated";
+const GRAPHICS_ORDER: Graphics[] = ["none", "static", "animated"]; // GRAPHICS index, shared with src/pkjs/index.js
+
 type Melody = "single" | "triple" | "teapot" | "kettle" | "tada";
 const MELODY_ORDER: Melody[] = ["single", "tada", "triple", "teapot", "kettle"]; // CHIME_MELODY index, shared with src/pkjs/index.js
 
@@ -186,6 +189,7 @@ interface Settings {
 	touch: boolean;
 	railIcons: boolean;
 	simplified: boolean;
+	graphics: Graphics;
 	melody: Melody;
 	bloom: number; // seconds
 	steep: number;
@@ -214,7 +218,7 @@ const EASTER_EGG_CHANCE = 0.1;
 const MIN_SECONDS = 5;
 const MAX_SECONDS = 600;
 
-const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, melody: "kettle", bloom: 30, steep: 90 };
+const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, graphics: "animated", melody: "kettle", bloom: 30, steep: 90 };
 const SETTINGS_KEY = "settings";
 
 function loadSettings(): Settings {
@@ -223,6 +227,7 @@ function loadSettings(): Settings {
 		if (raw) {
 			const saved: Settings = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
 			if (!MELODY_ORDER.includes(saved.melody)) saved.melody = DEFAULT_SETTINGS.melody;
+			if (!GRAPHICS_ORDER.includes(saved.graphics)) saved.graphics = DEFAULT_SETTINGS.graphics;
 			const old = saved as unknown as { steep1?: number; steep2?: number };
 			if (old.steep1 !== undefined) saved.bloom = old.steep1; // pre-1.11 names
 			if (old.steep2 !== undefined) saved.steep = old.steep2;
@@ -236,7 +241,7 @@ function loadSettings(): Settings {
 let settings = loadSettings();
 
 const inbox: Message = new Message({
-	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "BLOOM_SECONDS", "STEEP_SECONDS", "RAIL_ICONS", "SIMPLE_STEPS"],
+	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "BLOOM_SECONDS", "STEEP_SECONDS", "RAIL_ICONS", "SIMPLE_STEPS", "GRAPHICS"],
 	input: 256, // a handful of int tuples; the default is 8 KB each way
 	output: 32,
 	onReadable: () => {
@@ -248,6 +253,7 @@ const inbox: Message = new Message({
 		const touch = num("TOUCH_ENABLED");
 		const railIcons = num("RAIL_ICONS");
 		const simplified = num("SIMPLE_STEPS");
+		const graphics = num("GRAPHICS");
 		const melody = num("CHIME_MELODY");
 		const duration = (key: string, current: number): number => {
 			const value = num(key);
@@ -260,12 +266,13 @@ const inbox: Message = new Message({
 			touch: touch === undefined ? settings.touch : touch !== 0,
 			railIcons: railIcons === undefined ? settings.railIcons : railIcons !== 0,
 			simplified: simplified === undefined ? settings.simplified : simplified !== 0,
+			graphics: graphics === undefined ? settings.graphics : (GRAPHICS_ORDER[graphics] ?? settings.graphics),
 			melody: melody === undefined ? settings.melody : (MELODY_ORDER[melody] ?? settings.melody),
 			bloom: duration("BLOOM_SECONDS", settings.bloom),
 			steep: duration("STEEP_SECONDS", settings.steep),
 		};
 		localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} railIcons=${settings.railIcons} simplified=${settings.simplified} melody=${settings.melody} bloom=${settings.bloom} steep=${settings.steep}`);
+		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} railIcons=${settings.railIcons} simplified=${settings.simplified} graphics=${settings.graphics} melody=${settings.melody} bloom=${settings.bloom} steep=${settings.steep}`);
 		controller?.applyChrome();
 		if (num("PREVIEW")) alert(); // Save on the phone plays the new choice once
 	},
@@ -376,7 +383,7 @@ class AeroPressTimer {
 		if (!animate) {
 			this.art = target;
 			this.applyArt(target);
-			if (target.steam) this.startSteam();
+			if (target.steam && settings.graphics === "animated") this.startSteam();
 			return;
 		}
 		const from = this.art;
@@ -396,7 +403,7 @@ class AeroPressTimer {
 				this.stopArtTween();
 				this.art = target;
 				this.applyArt(target);
-				if (target.steam) this.startSteam();
+				if (target.steam && settings.graphics === "animated") this.startSteam();
 			}
 		}, 50);
 	}
@@ -436,6 +443,15 @@ class AeroPressTimer {
 
 	applyChrome(): void {
 		this.ui.RAIL.visible = settings.railIcons;
+
+		const showArt = settings.graphics !== "none";
+		this.ui.ART.visible = showArt;
+		if (!showArt) this.stopArtTimers();
+		const left = showArt ? ART_W : INSET;
+		this.ui.NAME.coordinates  = { left, right: INSET, top: NAME_TOP,  height: NAME_H };
+		this.ui.TIME.coordinates  = { left, right: INSET, top: TIME_TOP,  height: TIME_H };
+		this.ui.INSTR.coordinates = { left, right: INSET, top: INSTR_TOP, height: INSTR_H };
+		this.ui.INSTR.style = showArt ? instrArtStyle : instrStyle;
 		const next = activeRecipe();
 		if (next.length !== this.steps.length) {
 			this.steps = next;
@@ -464,7 +480,7 @@ class AeroPressTimer {
 		const step = this.steps[i];
 		const seconds = step.time ? settings[step.time] : step.seconds;
 
-		this.setArt(ART_STATES[step.name] ?? ART_EMPTY, true);
+		this.setArt(ART_STATES[step.name] ?? ART_EMPTY, settings.graphics === "animated");
 		this.ui.NAME.string = step.name;
 		this.ui.INSTR.string = (step.time === "steep" && Math.random() < EASTER_EGG_CHANCE)
 			? "Wait for it..."
@@ -501,8 +517,9 @@ class AeroPressTimer {
 				? "Time! Enjoy your cup."
 				: skipped ? `Time! ${skipped}.` : "Time! DN for next step.";
 			if (this.index === this.steps.length - 1) {
-				this.setArt(ART_STATES.PRESS, true);
-				this.settle = setTimeout(() => this.setArt(ART_STATES.DONE, true), SETTLE_MS);
+				const animate = settings.graphics === "animated";
+				this.setArt(ART_STATES.PRESS, animate);
+				this.settle = setTimeout(() => this.setArt(ART_STATES.DONE, animate), SETTLE_MS);
 			}
 			alert();
 		}

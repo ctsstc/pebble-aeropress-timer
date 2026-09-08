@@ -77,6 +77,19 @@ do not set it.
   `pebble send-app-message --emulator emery --int 10000=0 10001=1 10002=70`
   (numeric keys in `build/appinfo.json` order: chime, vibe, volume, touch, ...)
 
+## Graphics
+
+An AeroPress and cup are drawn down the left edge, filling and emptying as you
+move through the brew. Only the outlines ship as bitmaps: liquid levels, the
+plunger and the stirrer are geometry the app positions, so transitions
+interpolate rather than swapping frames, and adding a fill level costs nothing.
+
+Settings offers animated, static or none. Animated tweens between steps and
+loops the steam on a finished cup, giving up after three minutes. Static draws
+each step without motion. None hides the column, and the text reclaims the
+width at its full size, since the art column is what forces the smaller
+instruction face.
+
 ## Chime
 
 Timed steps play a chime through the speaker while the vibe pulses in the same
