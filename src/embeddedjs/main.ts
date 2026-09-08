@@ -331,7 +331,7 @@ class AeroPressTimer {
 			this.ui.TIME.style = timeDoneStyle;
 			// A timer on the final step means the brew is over, not that another step waits.
 			this.ui.INSTR.string = (this.index === this.steps.length - 1)
-				? "Time! Press and enjoy."
+				? "Time! Enjoy your cup."
 				: "Time! DN for next step.";
 			alert();
 		}
