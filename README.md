@@ -24,15 +24,19 @@ back, middle to act on the current step.
 Both live at the top of `src/embeddedjs/main.ts`:
 
 - `RECIPE`: the steps. `seconds: 0` = untimed step (shows `--:--`, waits for DOWN).
-- `MELODIES`: the three chime options (MIDI numbers, 60 = C4, and ms per
+- `MELODIES`: the four chime options (MIDI numbers, 60 = C4, and ms per
   note). The vibration pulses once per note in the same rhythm. Which one
   plays, the volume, and on/off are settings.
+
+A step with `time: "steep1"` or `"steep2"` takes its length from settings and
+ignores its own `seconds`, which stays as the fallback. A new length applies the
+next time you enter that step, so press SELECT to re-arm a running one.
 
 ## Settings
 
 In the Pebble phone app, open AeroPress Timer and tap Settings. The page has
-chime on/off, chime melody, vibration on/off, chime volume, and tap-to-advance
-on/off. Values travel to the watch as an App Message and are saved on the watch,
+chime on/off, chime melody, vibration on/off, chime volume, tap-to-advance
+on/off, and the two steep lengths. Values travel to the watch as an App Message and are saved on the watch,
 so they hold without the phone.
 
 The play button beside the melody auditions the tune through the phone speaker
@@ -55,10 +59,11 @@ do not set it.
 ## Chime
 
 Timed steps play a chime through the speaker while the vibe pulses in the same
-rhythm. The default is the opening phrase of "I'm a Little Teapot"; Settings
-can switch to a single tone or a three-note chirp, or turn either alert off.
-That phrase comes from a 1939 song that stays under US copyright until 2035,
-which only matters if this is ever published to the app store. The chime is also
+rhythm. Settings picks one of four: a single tone, a three-note chirp, Teapot
+(a rising run landing an octave up) or Kettle whistle (a kettle coming to the
+boil, the default). Both are original motifs rather than the 1939 song, so
+nothing here reproduces a copyrighted melody. Either alert can be turned off.
+The chime is also
 skipped when the watch is muted (Settings > Sounds & Haptics) or Quiet Time is
 active, and it silently does nothing if the speaker API is unavailable.
 

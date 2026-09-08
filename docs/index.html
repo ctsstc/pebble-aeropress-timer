@@ -12,6 +12,7 @@
   .row label { flex: 1; }
   input[type=checkbox] { width: 24px; height: 24px; }
   input[type=range] { width: 55%; }
+  input[type=number] { width: 5.5em; font-size: 16px; padding: 6px 8px; text-align: right; }
   select { font-size: 16px; padding: 6px 8px; }
   .chime-row select { flex: 1; margin-right: 10px; }
   .play { border: 0; border-radius: 8px; background: #333; color: #ffaa00; font-size: 18px; width: 44px; height: 40px; }
@@ -24,17 +25,19 @@
 <body>
 <h1>AeroPress Timer</h1>
 <div class="row"><label for="chime">Chime at 0:00</label><input id="chime" type="checkbox"></div>
-<div class="row chime-row"><label for="melody">Chime</label><select id="melody"><option value="single">Single tone</option><option value="triple">Three notes</option><option value="teapot">Teapot</option></select><button id="play" class="play" type="button" aria-label="Preview chime">&#9654;</button></div>
+<div class="row chime-row"><label for="melody">Chime</label><select id="melody"><option value="single">Single tone</option><option value="triple">Three notes</option><option value="teapot">Teapot</option><option value="kettle">Kettle whistle</option></select><button id="play" class="play" type="button" aria-label="Preview chime">&#9654;</button></div>
 <div class="row"><label for="vibe">Vibrate at 0:00</label><input id="vibe" type="checkbox"></div>
 <div class="row"><label for="touch">Tap screen to advance</label><input id="touch" type="checkbox"></div>
 <div class="row"><label for="volume">Chime volume</label><input id="volume" type="range" min="0" max="100" step="5"><span class="value" id="volumeValue"></span></div>
+<div class="row"><label for="steep1">First steep (seconds)</label><input id="steep1" type="number" min="5" max="600" step="5"></div>
+<div class="row"><label for="steep2">Second steep (seconds)</label><input id="steep2" type="number" min="5" max="600" step="5"></div>
 <button id="save">Save</button>
 <p class="hint">The play button previews the tune on this phone; the watch plays it for real when you save. The vibration follows the rhythm of the chosen chime. The chime stays silent while the watch is muted or in Quiet Time, whatever this says.</p>
 <script>
 (function () {
   var params = new URLSearchParams(location.search);
   var returnTo = params.get("return_to") || "pebblejs://close#";
-  var settings = { chime: true, vibe: true, volume: 40, touch: true, melody: "teapot" };
+  var settings = { chime: true, vibe: true, volume: 40, touch: true, melody: "kettle", steep1: 30, steep2: 90 };
   try {
     var given = JSON.parse(params.get("settings"));
     if (given) settings = Object.assign(settings, given);
@@ -45,16 +48,19 @@
   var touch = document.getElementById("touch");
   var melody = document.getElementById("melody");
   var play = document.getElementById("play");
+  var steep1 = document.getElementById("steep1");
+  var steep2 = document.getElementById("steep2");
 
   // Mirror of MELODIES in src/embeddedjs/main.ts: [midi, ms] per note.
   var MELODIES = {
     single: [[79, 500]],
     triple: [[72, 120], [76, 120], [79, 120]],
-    teapot: [[72, 280], [74, 280], [76, 140], [77, 140], [79, 280], [84, 420]]
+    teapot: [[72, 280], [74, 280], [76, 140], [77, 140], [79, 280], [84, 420]],
+    kettle: [[76, 90], [83, 90], [88, 340], [86, 100], [88, 300]]
   };
   var audio = null;
   function preview(name) {
-    var notes = MELODIES[name] || MELODIES.teapot;
+    var notes = MELODIES[name] || MELODIES.kettle;
     try {
       audio = audio || new (window.AudioContext || window.webkitAudioContext)();
       if (audio.state === "suspended") audio.resume();
@@ -86,13 +92,20 @@
   vibe.checked = !!settings.vibe;
   touch.checked = settings.touch !== false;
   melody.value = settings.melody;
-  if (!melody.value) melody.value = "teapot";
+  if (!melody.value) melody.value = "kettle";
+  steep1.value = settings.steep1;
+  steep2.value = settings.steep2;
   volume.value = settings.volume;
   volumeValue.textContent = volume.value;
   volume.addEventListener("input", function () { volumeValue.textContent = volume.value; });
 
   document.getElementById("save").addEventListener("click", function () {
-    var out = { chime: chime.checked, vibe: vibe.checked, volume: Number(volume.value), touch: touch.checked, melody: melody.value };
+    function seconds(field, fallback) {
+      var n = Math.round(Number(field.value));
+      if (!isFinite(n) || n < 5) n = fallback;
+      return Math.min(600, n);
+    }
+    var out = { chime: chime.checked, vibe: vibe.checked, volume: Number(volume.value), touch: touch.checked, melody: melody.value, steep1: seconds(steep1, 30), steep2: seconds(steep2, 90) };
     location.href = returnTo + encodeURIComponent(JSON.stringify(out));
   });
 })();

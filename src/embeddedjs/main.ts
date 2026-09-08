@@ -12,24 +12,25 @@ import Message from "pebble/message";
 
 interface Step {
 	name: string;
-	seconds: number; // 0 = untimed step (no countdown)
+	seconds: number; // 0 = untimed step (no countdown); overridden when `time` is set
 	instr: string;
+	time?: "steep1" | "steep2"; // take the duration from this setting instead
 }
 
 // ---- Your recipe -----------------------------------------------------------
 const RECIPE: Step[] = [
 	{ name: "SETUP", seconds: 0,  instr: "Invert press. Add coffee, pour water." },
-	{ name: "STEEP", seconds: 30, instr: "Let it sit." },
+	{ name: "STEEP", seconds: 30, instr: "Let it sit.", time: "steep1" },
 	{ name: "STIR",  seconds: 0,  instr: "Give it a good stir." },
-	{ name: "STEEP", seconds: 90, instr: "Almost there..." },
+	{ name: "STEEP", seconds: 90, instr: "Almost there...", time: "steep2" },
 	{ name: "PRESS", seconds: 0,  instr: "Cap on, flip onto mug, press slow." },
 	{ name: "DONE",  seconds: 0,  instr: "Enjoy your coffee!" },
 ];
 
 // Chime at 0:00. MIDI note numbers (60 = C4); the vibe pulses once per note in the same rhythm.
 // Which melody plays, the volume, and on/off live in settings.
-type Melody = "single" | "triple" | "teapot";
-const MELODY_ORDER: Melody[] = ["single", "triple", "teapot"]; // CHIME_MELODY index, shared with src/pkjs/index.js
+type Melody = "single" | "triple" | "teapot" | "kettle";
+const MELODY_ORDER: Melody[] = ["single", "triple", "teapot", "kettle"]; // CHIME_MELODY index, shared with src/pkjs/index.js
 
 interface Note {
 	midi: number;
@@ -39,9 +40,13 @@ interface Note {
 const MELODIES: Record<Melody, Note[]> = {
 	single: [{ midi: 79, ms: 500 }],
 	triple: [{ midi: 72, ms: 120 }, { midi: 76, ms: 120 }, { midi: 79, ms: 120 }],
-	teapot: [ // "I'm a lit-tle tea-pot"
+	teapot: [ // a rising run that lands an octave up
 		{ midi: 72, ms: 280 }, { midi: 74, ms: 280 }, { midi: 76, ms: 140 },
 		{ midi: 77, ms: 140 }, { midi: 79, ms: 280 }, { midi: 84, ms: 420 },
+	],
+	kettle: [ // a kettle coming to the boil, then two warbles
+		{ midi: 76, ms: 90 }, { midi: 83, ms: 90 }, { midi: 88, ms: 340 },
+		{ midi: 86, ms: 100 }, { midi: 88, ms: 300 },
 	],
 };
 // ----------------------------------------------------------------------------
@@ -93,9 +98,14 @@ interface Settings {
 	volume: number;
 	touch: boolean;
 	melody: Melody;
+	steep1: number; // seconds
+	steep2: number;
 }
 
-const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, melody: "teapot" };
+const MIN_STEEP = 5;
+const MAX_STEEP = 600;
+
+const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, melody: "kettle", steep1: 30, steep2: 90 };
 const SETTINGS_KEY = "settings";
 
 function loadSettings(): Settings {
@@ -114,8 +124,8 @@ function loadSettings(): Settings {
 let settings = loadSettings();
 
 const inbox: Message = new Message({
-	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW"],
-	input: 96, // a handful of int tuples; the default is 8 KB each way
+	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "STEEP1_SECONDS", "STEEP2_SECONDS"],
+	input: 256, // a handful of int tuples; the default is 8 KB each way
 	output: 32,
 	onReadable: () => {
 		const msg = inbox.read();
@@ -125,15 +135,21 @@ const inbox: Message = new Message({
 		const volume = num("CHIME_VOLUME");
 		const touch = num("TOUCH_ENABLED");
 		const melody = num("CHIME_MELODY");
+		const steep = (key: string, current: number): number => {
+			const value = num(key);
+			return value === undefined ? current : Math.max(MIN_STEEP, Math.min(MAX_STEEP, value));
+		};
 		settings = {
 			chime: chime === undefined ? settings.chime : chime !== 0,
 			vibe: vibe === undefined ? settings.vibe : vibe !== 0,
 			volume: volume === undefined ? settings.volume : Math.max(0, Math.min(100, volume)),
 			touch: touch === undefined ? settings.touch : touch !== 0,
 			melody: melody === undefined ? settings.melody : (MELODY_ORDER[melody] ?? settings.melody),
+			steep1: steep("STEEP1_SECONDS", settings.steep1),
+			steep2: steep("STEEP2_SECONDS", settings.steep2),
 		};
 		localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} melody=${settings.melody}`);
+		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} melody=${settings.melody} steeps=${settings.steep1}/${settings.steep2}`);
 		if (num("PREVIEW")) alert(); // Save on the phone plays the new choice once
 	},
 });
@@ -221,6 +237,7 @@ class AeroPressTimer {
 		this.stopTicker();
 		this.index = i;
 		const step = RECIPE[i];
+		const seconds = step.time ? settings[step.time] : step.seconds;
 
 		this.ui.STEPNUM.string = `step ${i + 1} of ${RECIPE.length}`;
 		this.ui.NAME.string = step.name;
@@ -230,10 +247,10 @@ class AeroPressTimer {
 			: "UP back  SEL redo  DN next";
 		this.ui.TIME.style = timeStyle;
 
-		if (step.seconds > 0) {
+		if (seconds > 0) {
 			this.startTicks = Time.ticks;
-			this.durationMs = step.seconds * 1000;
-			this.ui.TIME.string = formatTime(step.seconds);
+			this.durationMs = seconds * 1000;
+			this.ui.TIME.string = formatTime(seconds);
 			this.ticker = setInterval(() => this.tick(), 250);
 		}
 		else {

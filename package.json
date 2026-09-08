@@ -26,7 +26,9 @@
       "CHIME_VOLUME",
       "TOUCH_ENABLED",
       "CHIME_MELODY",
-      "PREVIEW"
+      "PREVIEW",
+      "STEEP1_SECONDS",
+      "STEEP2_SECONDS"
     ],
     "resources": {
       "media": []
