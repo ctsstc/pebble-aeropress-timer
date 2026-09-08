@@ -21,6 +21,12 @@ are drawn from small bars because the built-in fonts carry no vertical
 triangles; the recycle glyph does exist and is used as-is. The rest of the
 screen stays centred, with symmetric insets so the rail never crowds the text.
 
+Settings also has "Simplified steps", which drops everything but the timed
+steps, leaving just the two steeps. It filters `RECIPE` rather than replacing
+it, so a step you add with a duration shows up in both modes and an
+instructional one shows up only in the full flow. Switching modes resets to the
+first step, since the old position may no longer exist.
+
 Settings can hide the rail, under "Show tap/button icons". The icons label the
 physical buttons as much as the tap zones, which is why the setting is not
 phrased as a touch-only option. Hiding them only removes the hints: the buttons

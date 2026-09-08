@@ -35,6 +35,7 @@
 <div class="row"><label for="vibe">Vibrate at 0:00</label><input id="vibe" type="checkbox"></div>
 <div class="row"><label for="touch">Tap screen to advance<small>Top third goes back, middle restarts the step, bottom advances.</small></label><input id="touch" type="checkbox"></div>
 <div class="row"><label for="railicons">Show tap/button icons<small>Hints down the right edge, lined up with the physical buttons. The buttons and the tap zones work either way.</small></label><input id="railicons" type="checkbox"></div>
+<div class="row"><label for="simplified">Simplified steps<small>Only the two timers, skipping the setup, stir and press prompts.</small></label><input id="simplified" type="checkbox"></div>
 <div class="row"><label for="steep1">First steep (seconds)</label><input id="steep1" type="number" min="5" max="600" step="5"></div>
 <div class="row"><label for="steep2">Second steep (seconds)</label><input id="steep2" type="number" min="5" max="600" step="5"></div>
 <div class="actions">
@@ -47,7 +48,7 @@
   var params = new URLSearchParams(location.search);
   var returnTo = params.get("return_to") || "pebblejs://close#";
 
-  var DEFAULTS = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, melody: "kettle", steep1: 30, steep2: 90 };
+  var DEFAULTS = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, melody: "kettle", steep1: 30, steep2: 90 };
   var settings = Object.assign({}, DEFAULTS);
   try {
     var given = JSON.parse(params.get("settings"));
@@ -58,6 +59,7 @@
   var vibe = document.getElementById("vibe");
   var touch = document.getElementById("touch");
   var railIcons = document.getElementById("railicons");
+  var simplified = document.getElementById("simplified");
   var melody = document.getElementById("melody");
   var play = document.getElementById("play");
   var steep1 = document.getElementById("steep1");
@@ -79,6 +81,7 @@
     vibe.checked = !!s.vibe;
     touch.checked = s.touch !== false;
     railIcons.checked = s.railIcons !== false;
+    simplified.checked = !!s.simplified;
     melody.value = s.melody;
     if (!melody.value) melody.value = DEFAULTS.melody;
     steep1.value = s.steep1;
@@ -132,6 +135,7 @@
       volume: Number(volume.value),
       touch: touch.checked,
       railIcons: railIcons.checked,
+      simplified: simplified.checked,
       melody: melody.value,
       steep1: seconds(steep1, DEFAULTS.steep1),
       steep2: seconds(steep2, DEFAULTS.steep2)

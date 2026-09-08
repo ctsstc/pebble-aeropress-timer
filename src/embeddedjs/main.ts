@@ -133,15 +133,24 @@ interface Settings {
 	volume: number;
 	touch: boolean;
 	railIcons: boolean;
+	simplified: boolean;
 	melody: Melody;
 	steep1: number; // seconds
 	steep2: number;
 }
 
+function isTimed(step: Step): boolean {
+	return step.seconds > 0 || step.time !== undefined;
+}
+
+function activeRecipe(): Step[] {
+	return settings.simplified ? RECIPE.filter(isTimed) : RECIPE;
+}
+
 const MIN_STEEP = 5;
 const MAX_STEEP = 600;
 
-const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, melody: "kettle", steep1: 30, steep2: 90 };
+const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, melody: "kettle", steep1: 30, steep2: 90 };
 const SETTINGS_KEY = "settings";
 
 function loadSettings(): Settings {
@@ -160,7 +169,7 @@ function loadSettings(): Settings {
 let settings = loadSettings();
 
 const inbox: Message = new Message({
-	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "STEEP1_SECONDS", "STEEP2_SECONDS", "RAIL_ICONS"],
+	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "STEEP1_SECONDS", "STEEP2_SECONDS", "RAIL_ICONS", "SIMPLE_STEPS"],
 	input: 256, // a handful of int tuples; the default is 8 KB each way
 	output: 32,
 	onReadable: () => {
@@ -171,6 +180,7 @@ const inbox: Message = new Message({
 		const volume = num("CHIME_VOLUME");
 		const touch = num("TOUCH_ENABLED");
 		const railIcons = num("RAIL_ICONS");
+		const simplified = num("SIMPLE_STEPS");
 		const melody = num("CHIME_MELODY");
 		const steep = (key: string, current: number): number => {
 			const value = num(key);
@@ -182,12 +192,13 @@ const inbox: Message = new Message({
 			volume: volume === undefined ? settings.volume : Math.max(0, Math.min(100, volume)),
 			touch: touch === undefined ? settings.touch : touch !== 0,
 			railIcons: railIcons === undefined ? settings.railIcons : railIcons !== 0,
+			simplified: simplified === undefined ? settings.simplified : simplified !== 0,
 			melody: melody === undefined ? settings.melody : (MELODY_ORDER[melody] ?? settings.melody),
 			steep1: steep("STEEP1_SECONDS", settings.steep1),
 			steep2: steep("STEEP2_SECONDS", settings.steep2),
 		};
 		localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} railIcons=${settings.railIcons} melody=${settings.melody} steeps=${settings.steep1}/${settings.steep2}`);
+		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} railIcons=${settings.railIcons} simplified=${settings.simplified} melody=${settings.melody} steeps=${settings.steep1}/${settings.steep2}`);
 		controller?.applyChrome();
 		if (num("PREVIEW")) alert(); // Save on the phone plays the new choice once
 	},
@@ -239,6 +250,7 @@ function formatTime(totalSeconds: number): string {
 
 class AeroPressTimer {
 	private index = 0;
+	private steps: Step[] = activeRecipe();
 	private startTicks = 0;
 	private durationMs = 0;
 	private ticker: ReturnType<typeof setInterval> | undefined;
@@ -261,10 +273,15 @@ class AeroPressTimer {
 
 	applyChrome(): void {
 		this.ui.RAIL.visible = settings.railIcons;
+		const next = activeRecipe();
+		if (next.length !== this.steps.length) {
+			this.steps = next;
+			this.enterStep(0);
+		}
 	}
 
 	next(): void {
-		const last = RECIPE.length - 1;
+		const last = this.steps.length - 1;
 		this.enterStep(this.index >= last ? 0 : this.index + 1);
 	}
 
@@ -280,14 +297,14 @@ class AeroPressTimer {
 	private enterStep(i: number): void {
 		this.stopTicker();
 		this.index = i;
-		const step = RECIPE[i];
+		const step = this.steps[i];
 		const seconds = step.time ? settings[step.time] : step.seconds;
 
 		this.ui.NAME.string = step.name;
 		this.ui.INSTR.string = step.instr;
-		this.ui.FOOT.string = (i === RECIPE.length - 1)
+		this.ui.FOOT.string = (i === this.steps.length - 1)
 			? "start over"
-			: `step ${i + 1} of ${RECIPE.length}`;
+			: `step ${i + 1} of ${this.steps.length}`;
 		this.ui.TIME.style = timeStyle;
 
 		if (seconds > 0) {
