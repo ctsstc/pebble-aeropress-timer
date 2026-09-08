@@ -27,8 +27,8 @@
       "TOUCH_ENABLED",
       "CHIME_MELODY",
       "PREVIEW",
-      "STEEP1_SECONDS",
-      "STEEP2_SECONDS",
+      "BLOOM_SECONDS",
+      "STEEP_SECONDS",
       "RAIL_ICONS",
       "SIMPLE_STEPS"
     ],

@@ -14,15 +14,15 @@ interface Step {
 	name: string;
 	seconds: number; // 0 = untimed step (no countdown); overridden when `time` is set
 	instr: string;
-	time?: "steep1" | "steep2"; // take the duration from this setting instead
+	time?: "bloom" | "steep"; // take the duration from this setting instead
 }
 
 // ---- Your recipe -----------------------------------------------------------
 const RECIPE: Step[] = [
-	{ name: "SETUP", seconds: 0,  instr: "Invert press. Add coffee, pour water." },
-	{ name: "STEEP", seconds: 30, instr: "Let it sit.", time: "steep1" },
+	{ name: "POUR",  seconds: 0,  instr: "Invert press. Add coffee, pour water." },
+	{ name: "BLOOM", seconds: 30, instr: "Let it sit.", time: "bloom" },
 	{ name: "STIR",  seconds: 0,  instr: "Give it a good stir." },
-	{ name: "STEEP", seconds: 90, instr: "Almost there...", time: "steep2" },
+	{ name: "STEEP", seconds: 90, instr: "Almost there...", time: "steep" },
 	{ name: "PRESS", seconds: 0,  instr: "Cap on, flip onto mug, press slow." },
 	{ name: "DONE",  seconds: 0,  instr: "Enjoy your coffee!" },
 ];
@@ -135,8 +135,8 @@ interface Settings {
 	railIcons: boolean;
 	simplified: boolean;
 	melody: Melody;
-	steep1: number; // seconds
-	steep2: number;
+	bloom: number; // seconds
+	steep: number;
 }
 
 function isTimed(step: Step): boolean {
@@ -147,10 +147,10 @@ function activeRecipe(): Step[] {
 	return settings.simplified ? RECIPE.filter(isTimed) : RECIPE;
 }
 
-const MIN_STEEP = 5;
-const MAX_STEEP = 600;
+const MIN_SECONDS = 5;
+const MAX_SECONDS = 600;
 
-const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, melody: "kettle", steep1: 30, steep2: 90 };
+const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, melody: "kettle", bloom: 30, steep: 90 };
 const SETTINGS_KEY = "settings";
 
 function loadSettings(): Settings {
@@ -159,6 +159,9 @@ function loadSettings(): Settings {
 		if (raw) {
 			const saved: Settings = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
 			if (!MELODY_ORDER.includes(saved.melody)) saved.melody = DEFAULT_SETTINGS.melody;
+			const old = saved as unknown as { steep1?: number; steep2?: number };
+			if (old.steep1 !== undefined) saved.bloom = old.steep1; // pre-1.11 names
+			if (old.steep2 !== undefined) saved.steep = old.steep2;
 			return saved;
 		}
 	}
@@ -169,7 +172,7 @@ function loadSettings(): Settings {
 let settings = loadSettings();
 
 const inbox: Message = new Message({
-	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "STEEP1_SECONDS", "STEEP2_SECONDS", "RAIL_ICONS", "SIMPLE_STEPS"],
+	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "BLOOM_SECONDS", "STEEP_SECONDS", "RAIL_ICONS", "SIMPLE_STEPS"],
 	input: 256, // a handful of int tuples; the default is 8 KB each way
 	output: 32,
 	onReadable: () => {
@@ -182,9 +185,9 @@ const inbox: Message = new Message({
 		const railIcons = num("RAIL_ICONS");
 		const simplified = num("SIMPLE_STEPS");
 		const melody = num("CHIME_MELODY");
-		const steep = (key: string, current: number): number => {
+		const duration = (key: string, current: number): number => {
 			const value = num(key);
-			return value === undefined ? current : Math.max(MIN_STEEP, Math.min(MAX_STEEP, value));
+			return value === undefined ? current : Math.max(MIN_SECONDS, Math.min(MAX_SECONDS, value));
 		};
 		settings = {
 			chime: chime === undefined ? settings.chime : chime !== 0,
@@ -194,11 +197,11 @@ const inbox: Message = new Message({
 			railIcons: railIcons === undefined ? settings.railIcons : railIcons !== 0,
 			simplified: simplified === undefined ? settings.simplified : simplified !== 0,
 			melody: melody === undefined ? settings.melody : (MELODY_ORDER[melody] ?? settings.melody),
-			steep1: steep("STEEP1_SECONDS", settings.steep1),
-			steep2: steep("STEEP2_SECONDS", settings.steep2),
+			bloom: duration("BLOOM_SECONDS", settings.bloom),
+			steep: duration("STEEP_SECONDS", settings.steep),
 		};
 		localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} railIcons=${settings.railIcons} simplified=${settings.simplified} melody=${settings.melody} steeps=${settings.steep1}/${settings.steep2}`);
+		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} railIcons=${settings.railIcons} simplified=${settings.simplified} melody=${settings.melody} bloom=${settings.bloom} steep=${settings.steep}`);
 		controller?.applyChrome();
 		if (num("PREVIEW")) alert(); // Save on the phone plays the new choice once
 	},

@@ -36,8 +36,8 @@
 <div class="row"><label for="touch">Tap screen to advance<small>Top third goes back, middle restarts the step, bottom advances.</small></label><input id="touch" type="checkbox"></div>
 <div class="row"><label for="railicons">Show tap/button icons<small>Hints down the right edge, lined up with the physical buttons. The buttons and the tap zones work either way.</small></label><input id="railicons" type="checkbox"></div>
 <div class="row"><label for="simplified">Simplified steps<small>Only the two timers, skipping the setup, stir and press prompts.</small></label><input id="simplified" type="checkbox"></div>
-<div class="row"><label for="steep1">First steep (seconds)</label><input id="steep1" type="number" min="5" max="600" step="5"></div>
-<div class="row"><label for="steep2">Second steep (seconds)</label><input id="steep2" type="number" min="5" max="600" step="5"></div>
+<div class="row"><label for="bloom">Bloom (seconds)<small>The first timer, after the pour.</small></label><input id="bloom" type="number" min="5" max="600" step="5"></div>
+<div class="row"><label for="steep">Steep (seconds)<small>The second timer, before the press.</small></label><input id="steep" type="number" min="5" max="600" step="5"></div>
 <div class="actions">
   <button id="save" type="button">Save</button>
   <button id="reset" type="button">Reset to defaults</button>
@@ -48,7 +48,7 @@
   var params = new URLSearchParams(location.search);
   var returnTo = params.get("return_to") || "pebblejs://close#";
 
-  var DEFAULTS = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, melody: "kettle", steep1: 30, steep2: 90 };
+  var DEFAULTS = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, melody: "kettle", bloom: 30, steep: 90 };
   var settings = Object.assign({}, DEFAULTS);
   try {
     var given = JSON.parse(params.get("settings"));
@@ -62,8 +62,8 @@
   var simplified = document.getElementById("simplified");
   var melody = document.getElementById("melody");
   var play = document.getElementById("play");
-  var steep1 = document.getElementById("steep1");
-  var steep2 = document.getElementById("steep2");
+  var bloom = document.getElementById("bloom");
+  var steep = document.getElementById("steep");
   var volume = document.getElementById("volume");
   var volumeValue = document.getElementById("volumeValue");
 
@@ -84,8 +84,8 @@
     simplified.checked = !!s.simplified;
     melody.value = s.melody;
     if (!melody.value) melody.value = DEFAULTS.melody;
-    steep1.value = s.steep1;
-    steep2.value = s.steep2;
+    bloom.value = s.bloom !== undefined ? s.bloom : s.steep1;
+    steep.value = s.steep !== undefined ? s.steep : s.steep2;
     volume.value = s.volume;
     volumeValue.textContent = volume.value;
   }
@@ -137,8 +137,8 @@
       railIcons: railIcons.checked,
       simplified: simplified.checked,
       melody: melody.value,
-      steep1: seconds(steep1, DEFAULTS.steep1),
-      steep2: seconds(steep2, DEFAULTS.steep2)
+      bloom: seconds(bloom, DEFAULTS.bloom),
+      steep: seconds(steep, DEFAULTS.steep)
     };
     location.href = returnTo + encodeURIComponent(JSON.stringify(out));
   });

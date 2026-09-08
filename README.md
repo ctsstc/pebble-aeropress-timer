@@ -3,7 +3,7 @@
 Inverted-method AeroPress timer with **manual advance**. Timed steps buzz (and
 chime) at 0:00 and then wait for you. Nothing auto-advances.
 
-Default recipe: Setup, 30s steep, Stir, 90s steep, Flip & press, Done.
+Default recipe: Pour, 30s bloom, Stir, 90s steep, Flip & press, Done.
 
 ## Buttons
 
@@ -46,7 +46,7 @@ Both live at the top of `src/embeddedjs/main.ts`:
   note). The vibration pulses once per note in the same rhythm. Which one
   plays, the volume, and on/off are settings.
 
-A step with `time: "steep1"` or `"steep2"` takes its length from settings and
+A step with `time: "bloom"` or `"steep"` takes its length from settings and
 ignores its own `seconds`, which stays as the fallback. A new length applies the
 next time you enter that step, so press SELECT to re-arm a running one.
 

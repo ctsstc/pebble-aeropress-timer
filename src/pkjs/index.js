@@ -21,8 +21,8 @@ function toMessage(s, preview) {
     RAIL_ICONS: s.railIcons === false ? 0 : 1,
     SIMPLE_STEPS: s.simplified ? 1 : 0,
     CHIME_MELODY: melody < 0 ? 4 : melody,
-    STEEP1_SECONDS: Number(s.steep1) || 30,
-    STEEP2_SECONDS: Number(s.steep2) || 90
+    BLOOM_SECONDS: Number(s.bloom !== undefined ? s.bloom : s.steep1) || 30,
+    STEEP_SECONDS: Number(s.steep !== undefined ? s.steep : s.steep2) || 90
   };
 }
 
