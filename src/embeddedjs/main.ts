@@ -62,19 +62,25 @@ const COLOR_TIME = "#FFAA00"; // amber while counting
 const COLOR_DONE = "#00FF00"; // green at 0:00
 
 const bgSkin        = new Skin({ fill: COLOR_BG });
-const stepNumStyle  = new Style({ font: "18px Gothic",      color: COLOR_DIM,  horizontal: "center" });
-const nameStyle     = new Style({ font: "bold 36px Gothic", color: COLOR_TEXT, horizontal: "center" });
-const timeStyle     = new Style({ font: "bold 49px Roboto", color: COLOR_TIME, horizontal: "center" });
-const timeDoneStyle = new Style({ font: "bold 49px Roboto", color: COLOR_DONE, horizontal: "center" });
-const timeIdleStyle = new Style({ font: "bold 42px Bitham", color: COLOR_DIM,  horizontal: "center" }); // Roboto 49 has no hyphen glyph
+const nameStyle     = new Style({ font: "bold 36px Gothic", color: COLOR_TEXT, horizontal: "center", vertical: "middle" });
+const timeStyle     = new Style({ font: "bold 49px Roboto", color: COLOR_TIME, horizontal: "center", vertical: "middle" });
+const timeDoneStyle = new Style({ font: "bold 49px Roboto", color: COLOR_DONE, horizontal: "center", vertical: "middle" });
+const timeIdleStyle = new Style({ font: "bold 42px Bitham", color: COLOR_DIM,  horizontal: "center", vertical: "middle" }); // Roboto 49 has no hyphen glyph
 const instrStyle    = new Style({ font: "bold 24px Gothic", color: COLOR_TEXT, horizontal: "center" });
-const hintStyle     = new Style({ font: "18px Gothic",      color: COLOR_DIM,  horizontal: "center" });
+const footStyle     = new Style({ font: "18px Gothic",      color: COLOR_DIM,  horizontal: "center", vertical: "middle" });
 const railStyle     = new Style({ font: "bold 24px Gothic", color: COLOR_DIM,  horizontal: "center" });
 const railSkin      = new Skin({ fill: COLOR_DIM });
 
 // A thin overlay down the right edge naming each tap zone, lined up with the
 // physical buttons. The zones themselves are full-width thirds of the screen.
 const RAIL_W = 22;
+const FOOT_H = 22;
+const TIME_H = 58;
+const TIME_TOP = Math.round((screen.height - TIME_H) / 2); // the countdown is pinned to the centre
+const NAME_H = 42;
+const NAME_TOP = Math.round((TIME_TOP - NAME_H) / 2);
+const INSTR_TOP = TIME_TOP + TIME_H + 6;
+const INSTR_H = screen.height - INSTR_TOP - FOOT_H - 4;
 const INSET = RAIL_W;
 const zoneCenter = (zone: number): number => Math.round(screen.height * (2 * zone + 1) / 6);
 const RailIcon = (($: any, glyph: string, zone: number) => Label($, {
@@ -108,11 +114,10 @@ class TapBehavior extends Behavior {
 const AeroApplication = Application.template(($: any) => ({
 	skin: bgSkin, active: true, Behavior: TapBehavior,
 	contents: [
-		Label($, { anchor: "STEPNUM", left: 0,     right: 0,     top: 0,    height: 20, style: stepNumStyle, string: "" }),
-		Label($, { anchor: "NAME",    left: INSET, right: INSET, top: 20,   height: 38, style: nameStyle,    string: "" }),
-		Label($, { anchor: "TIME",    left: INSET, right: INSET, top: 58,   height: 56, style: timeStyle,    string: "" }),
-		Text($,  { anchor: "INSTR",   left: INSET, right: INSET, top: 116,  height: 90, style: instrStyle,   string: "" }),
-		Label($, { anchor: "HINT",    left: 0,     right: 0,     bottom: 0, height: 20, style: hintStyle,    string: "" }),
+		Label($, { anchor: "NAME",  left: INSET, right: INSET, top: NAME_TOP,  height: NAME_H,  style: nameStyle,  string: "" }),
+		Label($, { anchor: "TIME",  left: INSET, right: INSET, top: TIME_TOP,  height: TIME_H,  style: timeStyle,  string: "" }),
+		Text($,  { anchor: "INSTR", left: INSET, right: INSET, top: INSTR_TOP, height: INSTR_H, style: instrStyle, string: "" }),
+		Label($, { anchor: "FOOT",  left: 0,     right: 0,     bottom: 2,     height: FOOT_H,  style: footStyle,  string: "" }),
 		Container($, { anchor: "RAIL", right: 0, width: RAIL_W, top: 0, bottom: 0, contents: [
 			...RailArrow($, true, 0),
 			RailIcon($, "\u267B", 1),
@@ -278,10 +283,11 @@ class AeroPressTimer {
 		const step = RECIPE[i];
 		const seconds = step.time ? settings[step.time] : step.seconds;
 
-		this.ui.STEPNUM.string = `step ${i + 1} of ${RECIPE.length}`;
 		this.ui.NAME.string = step.name;
 		this.ui.INSTR.string = step.instr;
-		this.ui.HINT.string = (i === RECIPE.length - 1) ? "start over" : "";
+		this.ui.FOOT.string = (i === RECIPE.length - 1)
+			? "start over"
+			: `step ${i + 1} of ${RECIPE.length}`;
 		this.ui.TIME.style = timeStyle;
 
 		if (seconds > 0) {
