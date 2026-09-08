@@ -22,7 +22,9 @@ triangles; the recycle glyph does exist and is used as-is. The rest of the
 screen stays centred, with symmetric insets so the rail never crowds the text.
 
 Settings also has "Simplified steps", which drops everything but the timed
-steps, leaving just the two steeps. It filters `RECIPE` rather than replacing
+steps, leaving just the two timers. When a timer ends there, the message names
+the untimed steps it skipped, so the bloom finishing reads "Time! Stir." rather
+than sending you to a step that is no longer in the list. It filters `RECIPE` rather than replacing
 it, so a step you add with a duration shows up in both modes and an
 instructional one shows up only in the full flow. Switching modes resets to the
 first step, since the old position may no longer exist.

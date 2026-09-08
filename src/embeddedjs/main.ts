@@ -147,6 +147,18 @@ function activeRecipe(): Step[] {
 	return settings.simplified ? RECIPE.filter(isTimed) : RECIPE;
 }
 
+// Simplified mode drops the untimed steps, so name them when their timer ends.
+function skippedBetween(current: Step, next: Step): string {
+	const from = RECIPE.indexOf(current);
+	const to = RECIPE.indexOf(next);
+	if (from < 0 || to < 0) return "";
+	return RECIPE.slice(from + 1, to)
+		.map(step => step.name.charAt(0) + step.name.slice(1).toLowerCase())
+		.join(", ");
+}
+
+const EASTER_EGG_CHANCE = 0.1;
+
 const MIN_SECONDS = 5;
 const MAX_SECONDS = 600;
 
@@ -304,7 +316,9 @@ class AeroPressTimer {
 		const seconds = step.time ? settings[step.time] : step.seconds;
 
 		this.ui.NAME.string = step.name;
-		this.ui.INSTR.string = step.instr;
+		this.ui.INSTR.string = (step.time === "steep" && Math.random() < EASTER_EGG_CHANCE)
+			? "Wait for it..."
+			: step.instr;
 		this.ui.FOOT.string = (i === this.steps.length - 1)
 			? "start over"
 			: `step ${i + 1} of ${this.steps.length}`;
@@ -330,9 +344,12 @@ class AeroPressTimer {
 			this.stopTicker();
 			this.ui.TIME.style = timeDoneStyle;
 			// A timer on the final step means the brew is over, not that another step waits.
+			const skipped = (this.index < this.steps.length - 1)
+				? skippedBetween(this.steps[this.index], this.steps[this.index + 1])
+				: "";
 			this.ui.INSTR.string = (this.index === this.steps.length - 1)
 				? "Time! Enjoy your cup."
-				: "Time! DN for next step.";
+				: skipped ? `Time! ${skipped}.` : "Time! DN for next step.";
 			alert();
 		}
 	}
