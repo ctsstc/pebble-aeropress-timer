@@ -24,15 +24,30 @@ back, middle to act on the current step.
 Both live at the top of `src/embeddedjs/main.ts`:
 
 - `RECIPE`: the steps. `seconds: 0` = untimed step (shows `--:--`, waits for DOWN).
-- `CHIME`: notes played at 0:00 (MIDI numbers, 60 = C4), note length in ms,
-  and volume 0-100. Default is C5, E5, G5 at 120 ms each.
+- `CHIME`: notes played at 0:00 (MIDI numbers, 60 = C4) and note length in ms.
+  Default is C5, E5, G5 at 120 ms each. Volume and on/off are settings.
+
+## Settings
+
+In the Pebble phone app, open AeroPress Timer and tap Settings. The page has
+chime on/off, vibration on/off, and chime volume. Values travel to the watch as
+an App Message and are saved on the watch, so they hold without the phone.
+
+- Page: `docs/index.html`, served by GitHub Pages at
+  https://ctsstc.github.io/pebble-aeropress-timer/
+- Phone side: `src/pkjs/index.js` opens the page and forwards the result.
+- Watch side: the `Message` listener in `src/embeddedjs/main.ts`, persisted
+  with `localStorage`.
+- Emulator: `pebble emu-app-config --emulator emery --file docs/index.html`
+  drives the page, or push values directly:
+  `pebble send-app-message --emulator emery --int CHIME_ENABLED=0 VIBE_ENABLED=1 CHIME_VOLUME=70`
 
 ## Chime
 
 Timed steps play a short ascending chirp through the speaker in addition to the
-double-pulse vibe. The vibe always fires. The chime is skipped when the watch is
-muted (Settings > Sounds & Haptics) or Quiet Time is active, and it silently
-does nothing if the speaker API is unavailable.
+double-pulse vibe. Either can be turned off in Settings. The chime is also
+skipped when the watch is muted (Settings > Sounds & Haptics) or Quiet Time is
+active, and it silently does nothing if the speaker API is unavailable.
 
 Alloy has no speaker module yet, so the chime goes through FFI: `src/c/chime.c`
 wraps `speaker_play_notes()` and `speaker_is_muted()`, and the `ffi` block in

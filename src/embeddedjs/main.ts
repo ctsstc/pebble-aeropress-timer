@@ -8,6 +8,7 @@ import {} from "piu/MC";
 import Button from "pebble/button";
 import Vibes from "pebble/vibes";
 import Time from "time";
+import Message from "pebble/message";
 
 interface Step {
 	name: string;
@@ -25,8 +26,8 @@ const RECIPE: Step[] = [
 	{ name: "DONE",  seconds: 0,  instr: "Enjoy your coffee!" },
 ];
 
-// Chime at 0:00, alongside the vibe. MIDI note numbers (60 = C4), volume 0-100.
-const CHIME = { notes: [72, 76, 79], noteMs: 120, volume: 40 };
+// Chime at 0:00, alongside the vibe. MIDI note numbers (60 = C4). Volume and on/off live in settings.
+const CHIME = { notes: [72, 76, 79], noteMs: 120 };
 // ----------------------------------------------------------------------------
 
 // 64-color display: stick to palette-aligned values (00 / 55 / AA / FF per channel)
@@ -64,6 +65,47 @@ const AeroApplication = Application.template(($: any) => ({
 	],
 }));
 
+// Settings arrive from the phone config page (src/pkjs/index.js) and persist on the watch.
+interface Settings {
+	chime: boolean;
+	vibe: boolean;
+	volume: number;
+}
+
+const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40 };
+const SETTINGS_KEY = "settings";
+
+function loadSettings(): Settings {
+	try {
+		const raw = localStorage.getItem(SETTINGS_KEY);
+		if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+	}
+	catch {}
+	return { ...DEFAULT_SETTINGS };
+}
+
+let settings = loadSettings();
+
+const inbox: Message = new Message({
+	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME"],
+	input: 64, // three int tuples; the default is 8 KB each way
+	output: 32,
+	onReadable: () => {
+		const msg = inbox.read();
+		const num = (key: string): number | undefined => msg.has(key) ? Number(msg.get(key)) : undefined;
+		const chime = num("CHIME_ENABLED");
+		const vibe = num("VIBE_ENABLED");
+		const volume = num("CHIME_VOLUME");
+		settings = {
+			chime: chime === undefined ? settings.chime : chime !== 0,
+			vibe: vibe === undefined ? settings.vibe : vibe !== 0,
+			volume: volume === undefined ? settings.volume : Math.max(0, Math.min(100, volume)),
+		};
+		localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume}`);
+	},
+});
+
 // FFI bindings from src/c/chime.c. All three are absent when the mod was built without FFI.
 declare const Natives: {
 	chime_muted?(): number;
@@ -72,12 +114,13 @@ declare const Natives: {
 } | undefined;
 
 function chime(): void {
+	if (!settings.chime) return;
 	try {
 		if (typeof Natives === "undefined" || !Natives.chime_muted || !Natives.chime_set_note || !Natives.chime_play) return;
 		if (Natives.chime_muted()) return;
 		for (let i = 0; i < CHIME.notes.length; i++)
 			Natives.chime_set_note(i, CHIME.notes[i]);
-		Natives.chime_play(CHIME.notes.length, CHIME.noteMs, CHIME.volume);
+		Natives.chime_play(CHIME.notes.length, CHIME.noteMs, settings.volume);
 	}
 	catch {
 		// Speaker unavailable: the vibe is the alert.
@@ -158,7 +201,7 @@ class AeroPressTimer {
 			this.stopTicker();
 			this.ui.TIME.style = timeDoneStyle;
 			this.ui.INSTR.string = "Time! DN for next step.";
-			Vibes.doublePulse();
+			if (settings.vibe) Vibes.doublePulse();
 			chime();
 		}
 	}

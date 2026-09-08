@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AeroPress Timer settings</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; padding: 24px 20px; font: 17px/1.4 -apple-system, system-ui, sans-serif; background: #111; color: #eee; }
+  h1 { font-size: 22px; margin: 0 0 20px; }
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #333; }
+  .row label { flex: 1; }
+  input[type=checkbox] { width: 24px; height: 24px; }
+  input[type=range] { width: 55%; }
+  .value { min-width: 3ch; text-align: right; color: #ffaa00; font-variant-numeric: tabular-nums; }
+  button { margin-top: 28px; width: 100%; padding: 14px; font-size: 18px; border: 0; border-radius: 10px; background: #ffaa00; color: #111; font-weight: 600; }
+  .hint { color: #999; font-size: 14px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<h1>AeroPress Timer</h1>
+<div class="row"><label for="chime">Chime at 0:00</label><input id="chime" type="checkbox"></div>
+<div class="row"><label for="vibe">Vibrate at 0:00</label><input id="vibe" type="checkbox"></div>
+<div class="row"><label for="volume">Chime volume</label><input id="volume" type="range" min="0" max="100" step="5"><span class="value" id="volumeValue"></span></div>
+<button id="save">Save</button>
+<p class="hint">The chime stays silent while the watch is muted or in Quiet Time, whatever this says.</p>
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var returnTo = params.get("return_to") || "pebblejs://close#";
+  var settings = { chime: true, vibe: true, volume: 40 };
+  try {
+    var given = JSON.parse(params.get("settings"));
+    if (given) settings = Object.assign(settings, given);
+  } catch (e) {}
+
+  var chime = document.getElementById("chime");
+  var vibe = document.getElementById("vibe");
+  var volume = document.getElementById("volume");
+  var volumeValue = document.getElementById("volumeValue");
+
+  chime.checked = !!settings.chime;
+  vibe.checked = !!settings.vibe;
+  volume.value = settings.volume;
+  volumeValue.textContent = volume.value;
+  volume.addEventListener("input", function () { volumeValue.textContent = volume.value; });
+
+  document.getElementById("save").addEventListener("click", function () {
+    var out = { chime: chime.checked, vibe: vibe.checked, volume: Number(volume.value) };
+    location.href = returnTo + encodeURIComponent(JSON.stringify(out));
+  });
+})();
+</script>
+</body>
+</html>

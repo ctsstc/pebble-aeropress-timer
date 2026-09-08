@@ -17,8 +17,13 @@
     "watchapp": {
       "watchface": false
     },
+    "capabilities": [
+      "configurable"
+    ],
     "messageKeys": [
-      "dummy"
+      "CHIME_ENABLED",
+      "VIBE_ENABLED",
+      "CHIME_VOLUME"
     ],
     "resources": {
       "media": []
