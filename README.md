@@ -21,6 +21,10 @@ are drawn from small bars because the built-in fonts carry no vertical
 triangles; the recycle glyph does exist and is used as-is. The rest of the
 screen stays centred, with symmetric insets so the rail never crowds the text.
 
+Settings can hide the rail. That only removes the hints: the zones and the
+buttons keep working, and the layout holds its position so nothing reflows.
+Tapping itself is a separate setting.
+
 On the last step, DOWN starts over from the top. The layout follows the
 Pebble convention of moving down through a list: down to progress, up to go
 back, middle to act on the current step.

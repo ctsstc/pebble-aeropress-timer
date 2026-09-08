@@ -11,6 +11,7 @@
   h1 { font-size: 22px; margin: 0 0 12px; }
   .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; padding: 10px 0; border-bottom: 1px solid #333; }
   .row label { flex: 1; }
+  .row label small { display: block; margin-top: 3px; color: #8a8a8a; font-size: 13px; line-height: 1.3; }
   input[type=checkbox] { flex: none; margin: 0; width: 24px; height: 24px; }
   input[type=range] { margin: 0; width: 50%; }
   input[type=number] { flex: none; width: 5.5em; height: var(--control-h); padding: 0 10px; font-size: 16px; text-align: right; }
@@ -32,7 +33,8 @@
 <div class="row chime-row"><label for="melody">Chime</label><select id="melody"><option value="single">Single tone</option><option value="tada">Tada</option><option value="triple">Three notes</option><option value="teapot">Teapot</option><option value="kettle">Kettle whistle</option></select><button id="play" class="play" type="button" aria-label="Preview chime">&#9654;</button></div>
 <div class="row"><label for="volume">Chime volume</label><input id="volume" type="range" min="0" max="100" step="5"><span class="value" id="volumeValue"></span></div>
 <div class="row"><label for="vibe">Vibrate at 0:00</label><input id="vibe" type="checkbox"></div>
-<div class="row"><label for="touch">Tap screen to advance</label><input id="touch" type="checkbox"></div>
+<div class="row"><label for="touch">Tap screen to advance<small>Top third goes back, middle restarts the step, bottom advances.</small></label><input id="touch" type="checkbox"></div>
+<div class="row"><label for="railicons">Show tap icons<small>Arrow hints down the right edge. The three zones still work when hidden.</small></label><input id="railicons" type="checkbox"></div>
 <div class="row"><label for="steep1">First steep (seconds)</label><input id="steep1" type="number" min="5" max="600" step="5"></div>
 <div class="row"><label for="steep2">Second steep (seconds)</label><input id="steep2" type="number" min="5" max="600" step="5"></div>
 <div class="actions">
@@ -45,7 +47,7 @@
   var params = new URLSearchParams(location.search);
   var returnTo = params.get("return_to") || "pebblejs://close#";
 
-  var DEFAULTS = { chime: true, vibe: true, volume: 40, touch: true, melody: "kettle", steep1: 30, steep2: 90 };
+  var DEFAULTS = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, melody: "kettle", steep1: 30, steep2: 90 };
   var settings = Object.assign({}, DEFAULTS);
   try {
     var given = JSON.parse(params.get("settings"));
@@ -55,6 +57,7 @@
   var chime = document.getElementById("chime");
   var vibe = document.getElementById("vibe");
   var touch = document.getElementById("touch");
+  var railIcons = document.getElementById("railicons");
   var melody = document.getElementById("melody");
   var play = document.getElementById("play");
   var steep1 = document.getElementById("steep1");
@@ -75,6 +78,7 @@
     chime.checked = !!s.chime;
     vibe.checked = !!s.vibe;
     touch.checked = s.touch !== false;
+    railIcons.checked = s.railIcons !== false;
     melody.value = s.melody;
     if (!melody.value) melody.value = DEFAULTS.melody;
     steep1.value = s.steep1;
@@ -127,6 +131,7 @@
       vibe: vibe.checked,
       volume: Number(volume.value),
       touch: touch.checked,
+      railIcons: railIcons.checked,
       melody: melody.value,
       steep1: seconds(steep1, DEFAULTS.steep1),
       steep2: seconds(steep2, DEFAULTS.steep2)

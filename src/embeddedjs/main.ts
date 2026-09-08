@@ -78,14 +78,14 @@ const RAIL_W = 22;
 const INSET = RAIL_W;
 const zoneCenter = (zone: number): number => Math.round(screen.height * (2 * zone + 1) / 6);
 const RailIcon = (($: any, glyph: string, zone: number) => Label($, {
-	right: 0, width: RAIL_W, top: zoneCenter(zone) - 14, height: 28,
+	left: 0, width: RAIL_W, top: zoneCenter(zone) - 14, height: 28,
 	style: railStyle, string: glyph,
 }));
 
 // The built-in fonts carry no up or down triangle, so stack bars into one.
 const RailArrow = (($: any, pointUp: boolean, zone: number): any[] => {
 	const widths = pointUp ? [3, 7, 11, 15] : [15, 11, 7, 3];
-	const cx = screen.width - (RAIL_W >> 1);
+	const cx = RAIL_W >> 1;
 	const top = zoneCenter(zone) - widths.length;
 	return widths.map((w, i) => Content($, {
 		left: cx - (w >> 1), top: top + i * 2, width: w, height: 2, skin: railSkin,
@@ -113,9 +113,11 @@ const AeroApplication = Application.template(($: any) => ({
 		Label($, { anchor: "TIME",    left: INSET, right: INSET, top: 58,   height: 56, style: timeStyle,    string: "" }),
 		Text($,  { anchor: "INSTR",   left: INSET, right: INSET, top: 116,  height: 90, style: instrStyle,   string: "" }),
 		Label($, { anchor: "HINT",    left: 0,     right: 0,     bottom: 0, height: 20, style: hintStyle,    string: "" }),
-		...RailArrow($, true, 0),
-		RailIcon($, "\u267B", 1),
-		...RailArrow($, false, 2),
+		Container($, { anchor: "RAIL", right: 0, width: RAIL_W, top: 0, bottom: 0, contents: [
+			...RailArrow($, true, 0),
+			RailIcon($, "\u267B", 1),
+			...RailArrow($, false, 2),
+		]}),
 	],
 }));
 
@@ -125,6 +127,7 @@ interface Settings {
 	vibe: boolean;
 	volume: number;
 	touch: boolean;
+	railIcons: boolean;
 	melody: Melody;
 	steep1: number; // seconds
 	steep2: number;
@@ -133,7 +136,7 @@ interface Settings {
 const MIN_STEEP = 5;
 const MAX_STEEP = 600;
 
-const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, melody: "kettle", steep1: 30, steep2: 90 };
+const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, melody: "kettle", steep1: 30, steep2: 90 };
 const SETTINGS_KEY = "settings";
 
 function loadSettings(): Settings {
@@ -152,7 +155,7 @@ function loadSettings(): Settings {
 let settings = loadSettings();
 
 const inbox: Message = new Message({
-	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "STEEP1_SECONDS", "STEEP2_SECONDS"],
+	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "STEEP1_SECONDS", "STEEP2_SECONDS", "RAIL_ICONS"],
 	input: 256, // a handful of int tuples; the default is 8 KB each way
 	output: 32,
 	onReadable: () => {
@@ -162,6 +165,7 @@ const inbox: Message = new Message({
 		const vibe = num("VIBE_ENABLED");
 		const volume = num("CHIME_VOLUME");
 		const touch = num("TOUCH_ENABLED");
+		const railIcons = num("RAIL_ICONS");
 		const melody = num("CHIME_MELODY");
 		const steep = (key: string, current: number): number => {
 			const value = num(key);
@@ -172,12 +176,14 @@ const inbox: Message = new Message({
 			vibe: vibe === undefined ? settings.vibe : vibe !== 0,
 			volume: volume === undefined ? settings.volume : Math.max(0, Math.min(100, volume)),
 			touch: touch === undefined ? settings.touch : touch !== 0,
+			railIcons: railIcons === undefined ? settings.railIcons : railIcons !== 0,
 			melody: melody === undefined ? settings.melody : (MELODY_ORDER[melody] ?? settings.melody),
 			steep1: steep("STEEP1_SECONDS", settings.steep1),
 			steep2: steep("STEEP2_SECONDS", settings.steep2),
 		};
 		localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} melody=${settings.melody} steeps=${settings.steep1}/${settings.steep2}`);
+		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} railIcons=${settings.railIcons} melody=${settings.melody} steeps=${settings.steep1}/${settings.steep2}`);
+		controller?.applyChrome();
 		if (num("PREVIEW")) alert(); // Save on the phone plays the new choice once
 	},
 });
@@ -244,7 +250,12 @@ class AeroPressTimer {
 				else if (type === "up") this.previous();
 			},
 		});
+		this.applyChrome();
 		this.enterStep(0);
+	}
+
+	applyChrome(): void {
+		this.ui.RAIL.visible = settings.railIcons;
 	}
 
 	next(): void {
