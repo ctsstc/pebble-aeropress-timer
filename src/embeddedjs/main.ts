@@ -69,6 +69,28 @@ const timeDoneStyle = new Style({ font: "bold 49px Roboto", color: COLOR_DONE, h
 const timeIdleStyle = new Style({ font: "bold 42px Bitham", color: COLOR_DIM,  horizontal: "center" }); // Roboto 49 has no hyphen glyph
 const instrStyle    = new Style({ font: "bold 24px Gothic", color: COLOR_TEXT, horizontal: "center" });
 const hintStyle     = new Style({ font: "18px Gothic",      color: COLOR_DIM,  horizontal: "center" });
+const railStyle     = new Style({ font: "bold 24px Gothic", color: COLOR_DIM,  horizontal: "center" });
+const railSkin      = new Skin({ fill: COLOR_DIM });
+
+// A thin overlay down the right edge naming each tap zone, lined up with the
+// physical buttons. The zones themselves are full-width thirds of the screen.
+const RAIL_W = 22;
+const INSET = RAIL_W;
+const zoneCenter = (zone: number): number => Math.round(screen.height * (2 * zone + 1) / 6);
+const RailIcon = (($: any, glyph: string, zone: number) => Label($, {
+	right: 0, width: RAIL_W, top: zoneCenter(zone) - 14, height: 28,
+	style: railStyle, string: glyph,
+}));
+
+// The built-in fonts carry no up or down triangle, so stack bars into one.
+const RailArrow = (($: any, pointUp: boolean, zone: number): any[] => {
+	const widths = pointUp ? [3, 7, 11, 15] : [15, 11, 7, 3];
+	const cx = screen.width - (RAIL_W >> 1);
+	const top = zoneCenter(zone) - widths.length;
+	return widths.map((w, i) => Content($, {
+		left: cx - (w >> 1), top: top + i * 2, width: w, height: 2, skin: railSkin,
+	}));
+});
 
 let controller: AeroPressTimer | undefined;
 
@@ -86,11 +108,14 @@ class TapBehavior extends Behavior {
 const AeroApplication = Application.template(($: any) => ({
 	skin: bgSkin, active: true, Behavior: TapBehavior,
 	contents: [
-		Label($, { anchor: "STEPNUM", left: 0, right: 0, top: 0,    height: 20, style: stepNumStyle, string: "" }),
-		Label($, { anchor: "NAME",    left: 0, right: 0, top: 20,   height: 38, style: nameStyle,    string: "" }),
-		Label($, { anchor: "TIME",    left: 0, right: 0, top: 58,   height: 56, style: timeStyle,    string: "" }),
-		Text($,  { anchor: "INSTR",   left: 4, right: 4, top: 116,  height: 90, style: instrStyle,   string: "" }),
-		Label($, { anchor: "HINT",    left: 0, right: 0, bottom: 0, height: 20, style: hintStyle,    string: "" }),
+		Label($, { anchor: "STEPNUM", left: 0,     right: 0,     top: 0,    height: 20, style: stepNumStyle, string: "" }),
+		Label($, { anchor: "NAME",    left: INSET, right: INSET, top: 20,   height: 38, style: nameStyle,    string: "" }),
+		Label($, { anchor: "TIME",    left: INSET, right: INSET, top: 58,   height: 56, style: timeStyle,    string: "" }),
+		Text($,  { anchor: "INSTR",   left: INSET, right: INSET, top: 116,  height: 90, style: instrStyle,   string: "" }),
+		Label($, { anchor: "HINT",    left: 0,     right: 0,     bottom: 0, height: 20, style: hintStyle,    string: "" }),
+		...RailArrow($, true, 0),
+		RailIcon($, "\u267B", 1),
+		...RailArrow($, false, 2),
 	],
 }));
 
@@ -245,9 +270,7 @@ class AeroPressTimer {
 		this.ui.STEPNUM.string = `step ${i + 1} of ${RECIPE.length}`;
 		this.ui.NAME.string = step.name;
 		this.ui.INSTR.string = step.instr;
-		this.ui.HINT.string = (i === RECIPE.length - 1)
-			? "DN start over"
-			: "UP back  SEL redo  DN next";
+		this.ui.HINT.string = (i === RECIPE.length - 1) ? "start over" : "";
 		this.ui.TIME.style = timeStyle;
 
 		if (seconds > 0) {

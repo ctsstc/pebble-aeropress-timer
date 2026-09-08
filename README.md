@@ -15,6 +15,12 @@ Default recipe: Setup, 30s steep, Stir, 90s steep, Flip & press, Done.
 | BACK   | Exit (system default) |
 | TAP    | Zones mirror the buttons: top third = back, middle = reset, bottom = next (touch-enabled firmware/SDK only; can be turned off in Settings) |
 
+A thin rail down the right edge marks the three tap zones with an up arrow, a
+recycle mark and a down arrow, sitting at the centre of each zone. The arrows
+are drawn from small bars because the built-in fonts carry no vertical
+triangles; the recycle glyph does exist and is used as-is. The rest of the
+screen stays centred, with symmetric insets so the rail never crowds the text.
+
 On the last step, DOWN starts over from the top. The layout follows the
 Pebble convention of moving down through a list: down to progress, up to go
 back, middle to act on the current step.
