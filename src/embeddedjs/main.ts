@@ -90,9 +90,11 @@ const liquidSkin  = new Skin({ fill: COLOR_TIME });
 const partSkin    = new Skin({ fill: COLOR_DIM });
 
 // Geometry inside the art column. Liquid sits within the strokes so they stay visible.
-const CH_X = 9, CH_W = 28, CH_BOTTOM = 87, CH_SPAN = 75;
-const CUP_X = 9, CUP_W = 28, CUP_BOTTOM = 139, CUP_SPAN = 35;
-const PLUNGE_TRAVEL = 78; // fully home, seal at the chamber floor
+const CH_X = 9, CH_W = 28, CH_BOTTOM = 113, CH_SPAN = 75;
+const CH_INNER_TOP = 36, RIM_TOP = 29, CUP_TOP = 126;
+const CUP_X = 9, CUP_W = 28, CUP_BOTTOM = 165, CUP_SPAN = 35;
+const PLUNGE_TOP = 34, PLUNGE_TRAVEL = 74; // fully home puts the seal on the chamber floor
+const STEAM_H = 16, STEAM_W = 22, STEAM_X = 12;
 const STEAM_MAX_MS = 3 * 60 * 1000; // then the cup has gone cold
 const STEAM_FRAME_MS = 1000;
 const ART_TWEEN_MS = 700;
@@ -111,10 +113,10 @@ interface ArtState {
 }
 
 const ART_STATES: Record<string, ArtState> = {
-	POUR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true,  flipped: false },
-	BLOOM: { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true,  flipped: false },
-	STIR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: true,  steam: false, vessel: true,  flipped: false },
-	STEEP: { chamber: 0.95, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true,  flipped: false },
+	POUR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: true,  vessel: true,  flipped: false },
+	BLOOM: { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: true,  vessel: true,  flipped: false },
+	STIR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: true,  steam: true,  vessel: true,  flipped: false },
+	STEEP: { chamber: 0.95, cup: 0,    plunger: 0,   stirrer: false, steam: true,  vessel: true,  flipped: false },
 	PRESS: { chamber: 0,    cup: 0.85, plunger: 1,   stirrer: false, steam: false, vessel: true,  flipped: true },
 	DONE:  { chamber: 0,    cup: 0.85, plunger: 0,   stirrer: false, steam: true,  vessel: false, flipped: true },
 };
@@ -127,7 +129,8 @@ const ART_EMPTY: ArtState = { chamber: 0, cup: 0, plunger: 0, stirrer: false, st
 // physical buttons. The zones themselves are full-width thirds of the screen.
 const RAIL_W = 22;
 const ART_W = 46;
-const ART_H = 150;
+const ART_H = 176;
+const ART_PAD = 26;
 const FOOT_H = 22;
 const TIME_H = 58;
 const TIME_TOP = Math.round((screen.height - TIME_H) / 2); // the countdown is pinned to the centre
@@ -169,13 +172,13 @@ const AeroApplication = Application.template(($: any) => ({
 	skin: bgSkin, active: true, Behavior: TapBehavior,
 	contents: [
 		Container($, { anchor: "ART", left: 0, width: ART_W, top: Math.round((screen.height - ART_H) / 2), height: ART_H, contents: [
-			Content($,  { anchor: "OUTLINE", left: 0, width: ART_W, top: 0, height: ART_H, skin: outlineSkin }),
+			Content($,  { anchor: "OUTLINE", left: 0, width: ART_W, top: ART_PAD, height: 150, skin: outlineSkin }),
 			Content($,  { anchor: "CH_LIQ",  left: CH_X,  width: CH_W,  top: CH_BOTTOM,  height: 0, skin: liquidSkin }),
 			Content($,  { anchor: "CUP_LIQ", left: CUP_X, width: CUP_W, top: CUP_BOTTOM, height: 0, skin: liquidSkin }),
 			Content($,  { anchor: "PL_STEM", left: 18, width: 9,  top: 8, height: 0, skin: partSkin }),
 			Content($,  { anchor: "PL_KNOB", left: 8,  width: 29, top: 0, height: 8, skin: partSkin }),
-			Content($,  { anchor: "STIRRER", left: 21, width: 3,  top: 0, height: 64, skin: partSkin }),
-			Content($,  { anchor: "STEAM",   left: 0, width: ART_W, top: 76, height: 22, skin: steamSkins[0] }),
+			Content($,  { anchor: "STIRRER", left: 21, width: 3,  top: 0, height: 90, skin: partSkin }),
+			Content($,  { anchor: "STEAM",   left: STEAM_X, width: STEAM_W, top: 0, height: STEAM_H, skin: steamSkins[0] }),
 		]}),
 		Label($, { anchor: "NAME",  left: ART_W, right: INSET, top: NAME_TOP,  height: NAME_H,  style: nameStyle,  string: "" }),
 		Label($, { anchor: "TIME",  left: ART_W, right: INSET, top: TIME_TOP,  height: TIME_H,  style: timeStyle,  string: "" }),
@@ -373,16 +376,26 @@ class AeroPressTimer {
 
 		// The rod runs from the hand down to the seal, so it sits above the disc
 		// and out of the frame, never under it in the coffee.
-		const knobTop = Math.round(PLUNGE_TRAVEL * a.plunger);
+		const surface = CH_BOTTOM - chH;
+		const knobTop = Math.round(PLUNGE_TOP + PLUNGE_TRAVEL * a.plunger);
 		ui.PL_KNOB.visible = a.vessel && a.plunger > 0.01;
-		ui.PL_STEM.visible = a.vessel && knobTop > 0;
+		ui.PL_STEM.visible = a.vessel && a.plunger > 0.01;
 		if (a.plunger > 0.01)
 			ui.PL_KNOB.coordinates = { left: 8, width: 29, top: knobTop, height: 8 };
-		if (knobTop > 0)
-			ui.PL_STEM.coordinates = { left: 18, width: 9, top: 0, height: knobTop };
+		if (a.plunger > 0.01)
+			ui.PL_STEM.coordinates = { left: 11, width: 24, top: RIM_TOP, height: knobTop - RIM_TOP };
 
 		ui.STIRRER.visible = a.stirrer;
 		ui.STEAM.visible = a.steam;
+		if (a.steam) {
+			const inChamber = surface - STEAM_H;
+			ui.STEAM.coordinates = {
+				left: STEAM_X, width: STEAM_W, height: STEAM_H,
+				top: !a.vessel ? CUP_TOP - STEAM_H
+					: inChamber >= CH_INNER_TOP ? inChamber
+					: RIM_TOP - STEAM_H,
+			};
+		}
 	}
 
 	setArt(target: ArtState, animate: boolean, ms: number = ART_TWEEN_MS): void {

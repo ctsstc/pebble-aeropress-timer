@@ -84,6 +84,12 @@ move through the brew. Only the outlines ship as bitmaps: liquid levels, the
 plunger and the stirrer are geometry the app positions, so transitions
 interpolate rather than swapping frames, and adding a fill level costs nothing.
 
+Steam follows the heat rather than only appearing at the end. It rises above
+the brew inside the chamber while there is headroom, moves above the press once
+the chamber is too full to hold it, and ends above the cup. That is roughly 120
+frame swaps of a small strip across a default brew, against a countdown already
+repainting every second.
+
 The press never rotates, since the outline is a bitmap and there is not the
 room to show it turning over. Instead the lip cuts from the top of the chamber
 to the bottom when the press step opens, which reads as capped and flipped onto
