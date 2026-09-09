@@ -85,6 +85,7 @@ const artSkin = (id: number): any => {
 const outlineSkin = artSkin(1);
 const cupOnlySkin = artSkin(2);
 const steamSkins  = [artSkin(3), artSkin(4)];
+const flippedSkin = artSkin(5);
 const liquidSkin  = new Skin({ fill: COLOR_TIME });
 const partSkin    = new Skin({ fill: COLOR_DIM });
 
@@ -106,20 +107,21 @@ interface ArtState {
 	stirrer: boolean;
 	steam: boolean;
 	vessel: boolean;
+	flipped: boolean;
 }
 
 const ART_STATES: Record<string, ArtState> = {
-	POUR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true },
-	BLOOM: { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true },
-	STIR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: true,  steam: false, vessel: true },
-	STEEP: { chamber: 0.95, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true },
-	PRESS: { chamber: 0,    cup: 0.85, plunger: 1,   stirrer: false, steam: false, vessel: true },
-	DONE:  { chamber: 0,    cup: 0.85, plunger: 0,   stirrer: false, steam: true,  vessel: false },
+	POUR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true,  flipped: false },
+	BLOOM: { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true,  flipped: false },
+	STIR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: true,  steam: false, vessel: true,  flipped: false },
+	STEEP: { chamber: 0.95, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true,  flipped: false },
+	PRESS: { chamber: 0,    cup: 0.85, plunger: 1,   stirrer: false, steam: false, vessel: true,  flipped: true },
+	DONE:  { chamber: 0,    cup: 0.85, plunger: 0,   stirrer: false, steam: true,  vessel: false, flipped: true },
 };
 const stepTween = (name: string): number =>
 	name === "PRESS" ? PRESS_TWEEN_MS : name === "DONE" ? PULL_TWEEN_MS : ART_TWEEN_MS;
 
-const ART_EMPTY: ArtState = { chamber: 0, cup: 0, plunger: 0, stirrer: false, steam: false, vessel: true };
+const ART_EMPTY: ArtState = { chamber: 0, cup: 0, plunger: 0, stirrer: false, steam: false, vessel: true, flipped: false };
 
 // A thin overlay down the right edge naming each tap zone, lined up with the
 // physical buttons. The zones themselves are full-width thirds of the screen.
@@ -357,7 +359,7 @@ class AeroPressTimer {
 
 	private applyArt(a: ArtState): void {
 		const ui = this.ui;
-		ui.OUTLINE.skin = a.vessel ? outlineSkin : cupOnlySkin;
+		ui.OUTLINE.skin = !a.vessel ? cupOnlySkin : a.flipped ? flippedSkin : outlineSkin;
 
 		const chH = Math.round(CH_SPAN * a.chamber);
 		ui.CH_LIQ.visible = a.vessel && chH > 0;
@@ -402,6 +404,7 @@ class AeroPressTimer {
 				plunger: mix(from.plunger, target.plunger),
 				stirrer: target.stirrer,
 				steam: false,
+				flipped: target.flipped,
 				vessel: t < 1 ? (from.vessel || target.vessel) : target.vessel,
 			});
 			if (t >= 1) {

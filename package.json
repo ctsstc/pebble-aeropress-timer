@@ -38,7 +38,8 @@
         { "type": "bitmap", "name": "IMG_OUTLINE", "file": "img/outline.png" },
         { "type": "bitmap", "name": "IMG_CUP_ONLY", "file": "img/cup-only.png" },
         { "type": "bitmap", "name": "IMG_STEAM_A", "file": "img/steam-a.png" },
-        { "type": "bitmap", "name": "IMG_STEAM_B", "file": "img/steam-b.png" }
+        { "type": "bitmap", "name": "IMG_STEAM_B", "file": "img/steam-b.png" },
+        { "type": "bitmap", "name": "IMG_OUTLINE_FLIPPED", "file": "img/outline-flipped.png" }
       ]
     }
   }

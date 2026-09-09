@@ -84,6 +84,11 @@ move through the brew. Only the outlines ship as bitmaps: liquid levels, the
 plunger and the stirrer are geometry the app positions, so transitions
 interpolate rather than swapping frames, and adding a fill level costs nothing.
 
+The press never rotates, since the outline is a bitmap and there is not the
+room to show it turning over. Instead the lip cuts from the top of the chamber
+to the bottom when the press step opens, which reads as capped and flipped onto
+the cup. That one is deliberately not tweened: it is a cut, not a motion.
+
 Settings offers animated, static or none. Animated tweens between steps and
 loops the steam on a finished cup, giving up after three minutes. Static draws
 each step without motion. None hides the column, and the text reclaims the
