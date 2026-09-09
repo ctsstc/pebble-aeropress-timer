@@ -93,9 +93,10 @@ const CH_X = 9, CH_W = 28, CH_BOTTOM = 87, CH_SPAN = 75;
 const CUP_X = 9, CUP_W = 28, CUP_BOTTOM = 139, CUP_SPAN = 35;
 const PLUNGE_TRAVEL = 78; // fully home, seal at the chamber floor
 const STEAM_MAX_MS = 3 * 60 * 1000; // then the cup has gone cold
-const STEAM_FRAME_MS = 900;
+const STEAM_FRAME_MS = 1000;
 const ART_TWEEN_MS = 700;
 const PRESS_TWEEN_MS = 1600; // the plunge earns a slower beat
+const PULL_TWEEN_MS = 900;   // and the plunger comes back out on its own
 const SETTLE_MS = 2400;
 
 interface ArtState {
@@ -113,8 +114,11 @@ const ART_STATES: Record<string, ArtState> = {
 	STIR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: true,  steam: false, vessel: true },
 	STEEP: { chamber: 0.95, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true },
 	PRESS: { chamber: 0,    cup: 0.85, plunger: 1,   stirrer: false, steam: false, vessel: true },
-	DONE:  { chamber: 0,    cup: 0.85, plunger: 1,   stirrer: false, steam: true,  vessel: false },
+	DONE:  { chamber: 0,    cup: 0.85, plunger: 0,   stirrer: false, steam: true,  vessel: false },
 };
+const stepTween = (name: string): number =>
+	name === "PRESS" ? PRESS_TWEEN_MS : name === "DONE" ? PULL_TWEEN_MS : ART_TWEEN_MS;
+
 const ART_EMPTY: ArtState = { chamber: 0, cup: 0, plunger: 0, stirrer: false, steam: false, vessel: true };
 
 // A thin overlay down the right edge naming each tap zone, lined up with the
@@ -482,8 +486,7 @@ class AeroPressTimer {
 		const step = this.steps[i];
 		const seconds = step.time ? settings[step.time] : step.seconds;
 
-		this.setArt(ART_STATES[step.name] ?? ART_EMPTY, settings.graphics === "animated",
-			step.name === "PRESS" ? PRESS_TWEEN_MS : ART_TWEEN_MS);
+		this.setArt(ART_STATES[step.name] ?? ART_EMPTY, settings.graphics === "animated", stepTween(step.name));
 		this.ui.NAME.string = step.name;
 		this.ui.INSTR.string = (step.time === "steep" && Math.random() < EASTER_EGG_CHANCE)
 			? "Wait for it..."
@@ -522,7 +525,7 @@ class AeroPressTimer {
 			if (this.index === this.steps.length - 1) {
 				const animate = settings.graphics === "animated";
 				this.setArt(ART_STATES.PRESS, animate, PRESS_TWEEN_MS);
-				this.settle = setTimeout(() => this.setArt(ART_STATES.DONE, animate), SETTLE_MS);
+				this.settle = setTimeout(() => this.setArt(ART_STATES.DONE, animate, PULL_TWEEN_MS), SETTLE_MS);
 			}
 			alert();
 		}
