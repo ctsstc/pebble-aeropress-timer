@@ -1,7 +1,7 @@
 {
   "name": "aeropress-timer",
   "author": "Coder",
-  "version": "1.14.0",
+  "version": "1.14.1",
   "keywords": ["pebble-app"],
   "private": true,
   "dependencies": {},
