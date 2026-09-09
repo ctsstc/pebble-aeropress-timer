@@ -90,7 +90,7 @@ const partSkin    = new Skin({ fill: COLOR_DIM });
 
 // Geometry inside the art column. Liquid sits within the strokes so they stay visible.
 const CH_X = 10, CH_W = 25, CH_BOTTOM = 87, CH_SPAN = 75;
-const CUP_X = 8, CUP_W = 21, CUP_BOTTOM = 139, CUP_SPAN = 35;
+const CUP_X = 12, CUP_W = 21, CUP_BOTTOM = 139, CUP_SPAN = 35;
 const PLUNGE_TRAVEL = 54;
 const STEAM_MAX_MS = 3 * 60 * 1000; // then the cup has gone cold
 const ART_TWEEN_MS = 700;
@@ -166,7 +166,7 @@ const AeroApplication = Application.template(($: any) => ({
 			Content($,  { anchor: "CUP_LIQ", left: CUP_X, width: CUP_W, top: CUP_BOTTOM, height: 0, skin: liquidSkin }),
 			Content($,  { anchor: "PL_STEM", left: 18, width: 9,  top: 8, height: 0, skin: partSkin }),
 			Content($,  { anchor: "PL_KNOB", left: 8,  width: 29, top: 0, height: 8, skin: partSkin }),
-			Content($,  { anchor: "STIRRER", left: 21, width: 4,  top: 0, height: 64, skin: partSkin }),
+			Content($,  { anchor: "STIRRER", left: 21, width: 3,  top: 0, height: 64, skin: partSkin }),
 			Content($,  { anchor: "STEAM",   left: 0, width: ART_W, top: 76, height: 22, skin: steamSkins[0] }),
 		]}),
 		Label($, { anchor: "NAME",  left: ART_W, right: INSET, top: NAME_TOP,  height: NAME_H,  style: nameStyle,  string: "" }),
