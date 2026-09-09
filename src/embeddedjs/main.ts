@@ -369,16 +369,15 @@ class AeroPressTimer {
 		if (cupH > 0)
 			ui.CUP_LIQ.coordinates = { left: CUP_X, width: CUP_W, top: CUP_BOTTOM - cupH, height: cupH };
 
+		// The rod runs from the hand down to the seal, so it sits above the disc
+		// and out of the frame, never under it in the coffee.
 		const knobTop = Math.round(PLUNGE_TRAVEL * a.plunger);
-		const stemTop = knobTop + 8;
-		const surface = CH_BOTTOM - chH;
 		ui.PL_KNOB.visible = a.vessel && a.plunger > 0.01;
-		ui.PL_STEM.visible = a.vessel && a.plunger > 0.01 && surface > stemTop;
-		if (a.plunger > 0.01) {
+		ui.PL_STEM.visible = a.vessel && knobTop > 0;
+		if (a.plunger > 0.01)
 			ui.PL_KNOB.coordinates = { left: 8, width: 29, top: knobTop, height: 8 };
-			if (surface > stemTop)
-				ui.PL_STEM.coordinates = { left: 18, width: 9, top: stemTop, height: surface - stemTop };
-		}
+		if (knobTop > 0)
+			ui.PL_STEM.coordinates = { left: 18, width: 9, top: 0, height: knobTop };
 
 		ui.STIRRER.visible = a.stirrer;
 		ui.STEAM.visible = a.steam;
