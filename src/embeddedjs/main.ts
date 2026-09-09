@@ -89,12 +89,14 @@ const liquidSkin  = new Skin({ fill: COLOR_TIME });
 const partSkin    = new Skin({ fill: COLOR_DIM });
 
 // Geometry inside the art column. Liquid sits within the strokes so they stay visible.
-const CH_X = 10, CH_W = 25, CH_BOTTOM = 87, CH_SPAN = 75;
-const CUP_X = 12, CUP_W = 21, CUP_BOTTOM = 139, CUP_SPAN = 35;
-const PLUNGE_TRAVEL = 54;
+const CH_X = 9, CH_W = 28, CH_BOTTOM = 87, CH_SPAN = 75;
+const CUP_X = 9, CUP_W = 28, CUP_BOTTOM = 139, CUP_SPAN = 35;
+const PLUNGE_TRAVEL = 78; // fully home, seal at the chamber floor
 const STEAM_MAX_MS = 3 * 60 * 1000; // then the cup has gone cold
+const STEAM_FRAME_MS = 900;
 const ART_TWEEN_MS = 700;
-const SETTLE_MS = 1400;
+const PRESS_TWEEN_MS = 1600; // the plunge earns a slower beat
+const SETTLE_MS = 2400;
 
 interface ArtState {
 	chamber: number;
@@ -110,8 +112,8 @@ const ART_STATES: Record<string, ArtState> = {
 	BLOOM: { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true },
 	STIR:  { chamber: 0.35, cup: 0,    plunger: 0,   stirrer: true,  steam: false, vessel: true },
 	STEEP: { chamber: 0.95, cup: 0,    plunger: 0,   stirrer: false, steam: false, vessel: true },
-	PRESS: { chamber: 0.12, cup: 0.6,  plunger: 0.8, stirrer: false, steam: false, vessel: true },
-	DONE:  { chamber: 0,    cup: 0.85, plunger: 0,   stirrer: false, steam: true,  vessel: false },
+	PRESS: { chamber: 0,    cup: 0.85, plunger: 1,   stirrer: false, steam: false, vessel: true },
+	DONE:  { chamber: 0,    cup: 0.85, plunger: 1,   stirrer: false, steam: true,  vessel: false },
 };
 const ART_EMPTY: ArtState = { chamber: 0, cup: 0, plunger: 0, stirrer: false, steam: false, vessel: true };
 
@@ -366,8 +368,8 @@ class AeroPressTimer {
 		const knobTop = Math.round(PLUNGE_TRAVEL * a.plunger);
 		const stemTop = knobTop + 8;
 		const surface = CH_BOTTOM - chH;
-		ui.PL_KNOB.visible = a.plunger > 0.01;
-		ui.PL_STEM.visible = a.plunger > 0.01 && surface > stemTop;
+		ui.PL_KNOB.visible = a.vessel && a.plunger > 0.01;
+		ui.PL_STEM.visible = a.vessel && a.plunger > 0.01 && surface > stemTop;
 		if (a.plunger > 0.01) {
 			ui.PL_KNOB.coordinates = { left: 8, width: 29, top: knobTop, height: 8 };
 			if (surface > stemTop)
@@ -378,7 +380,7 @@ class AeroPressTimer {
 		ui.STEAM.visible = a.steam;
 	}
 
-	setArt(target: ArtState, animate: boolean): void {
+	setArt(target: ArtState, animate: boolean, ms: number = ART_TWEEN_MS): void {
 		this.stopArtTimers();
 		if (!animate) {
 			this.art = target;
@@ -389,7 +391,7 @@ class AeroPressTimer {
 		const from = this.art;
 		const start = Time.ticks;
 		this.artTween = setInterval(() => {
-			const t = Math.min(1, Time.delta(start) / ART_TWEEN_MS);
+			const t = Math.min(1, Time.delta(start) / ms);
 			const mix = (a: number, b: number): number => a + (b - a) * t;
 			this.applyArt({
 				chamber: mix(from.chamber, target.chamber),
@@ -419,7 +421,7 @@ class AeroPressTimer {
 			}
 			frame ^= 1;
 			this.ui.STEAM.skin = steamSkins[frame];
-		}, 500);
+		}, STEAM_FRAME_MS);
 	}
 
 	private stopArtTween(): void {
@@ -480,7 +482,8 @@ class AeroPressTimer {
 		const step = this.steps[i];
 		const seconds = step.time ? settings[step.time] : step.seconds;
 
-		this.setArt(ART_STATES[step.name] ?? ART_EMPTY, settings.graphics === "animated");
+		this.setArt(ART_STATES[step.name] ?? ART_EMPTY, settings.graphics === "animated",
+			step.name === "PRESS" ? PRESS_TWEEN_MS : ART_TWEEN_MS);
 		this.ui.NAME.string = step.name;
 		this.ui.INSTR.string = (step.time === "steep" && Math.random() < EASTER_EGG_CHANCE)
 			? "Wait for it..."
@@ -518,7 +521,7 @@ class AeroPressTimer {
 				: skipped ? `Time! ${skipped}.` : "Time! DN for next step.";
 			if (this.index === this.steps.length - 1) {
 				const animate = settings.graphics === "animated";
-				this.setArt(ART_STATES.PRESS, animate);
+				this.setArt(ART_STATES.PRESS, animate, PRESS_TWEEN_MS);
 				this.settle = setTimeout(() => this.setArt(ART_STATES.DONE, animate), SETTLE_MS);
 			}
 			alert();
