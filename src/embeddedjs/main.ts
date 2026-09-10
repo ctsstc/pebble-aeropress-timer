@@ -175,10 +175,10 @@ const AeroApplication = Application.template(($: any) => ({
 			Content($,  { anchor: "OUTLINE", left: 0, width: ART_W, top: ART_PAD, height: 150, skin: outlineSkin }),
 			Content($,  { anchor: "CH_LIQ",  left: CH_X,  width: CH_W,  top: CH_BOTTOM,  height: 0, skin: liquidSkin }),
 			Content($,  { anchor: "CUP_LIQ", left: CUP_X, width: CUP_W, top: CUP_BOTTOM, height: 0, skin: liquidSkin }),
-			Content($,  { anchor: "PL_STEM", left: 18, width: 9,  top: 8, height: 0, skin: partSkin }),
-			Content($,  { anchor: "PL_KNOB", left: 8,  width: 29, top: 0, height: 8, skin: partSkin }),
-			Content($,  { anchor: "STIRRER", left: 21, width: 3,  top: 0, height: 90, skin: partSkin }),
-			Content($,  { anchor: "STEAM",   left: STEAM_X, width: STEAM_W, top: 0, height: STEAM_H, skin: steamSkins[0] }),
+			Content($,  { anchor: "PL_STEM", left: 18, width: 9,  top: 8, height: 0, skin: partSkin, visible: false }),
+			Content($,  { anchor: "PL_KNOB", left: 8,  width: 29, top: 0, height: 8, skin: partSkin, visible: false }),
+			Content($,  { anchor: "STIRRER", left: 21, width: 3,  top: 0, height: 90, skin: partSkin, visible: false }),
+			Content($,  { anchor: "STEAM",   left: STEAM_X, width: STEAM_W, top: 0, height: STEAM_H, skin: steamSkins[0], visible: false }),
 		]}),
 		Label($, { anchor: "NAME",  left: ART_W, right: INSET, top: NAME_TOP,  height: NAME_H,  style: nameStyle,  string: "" }),
 		Label($, { anchor: "TIME",  left: ART_W, right: INSET, top: TIME_TOP,  height: TIME_H,  style: timeStyle,  string: "" }),
@@ -408,7 +408,7 @@ class AeroPressTimer {
 		}
 		const from = this.art;
 		const start = Time.ticks;
-		this.artTween = setInterval(() => {
+		const frame = (): void => {
 			const t = Math.min(1, Time.delta(start) / ms);
 			const mix = (a: number, b: number): number => a + (b - a) * t;
 			this.applyArt({
@@ -426,7 +426,9 @@ class AeroPressTimer {
 				this.applyArt(target);
 				if (target.steam && settings.graphics === "animated") this.startSteam();
 			}
-		}, 50);
+		};
+		this.artTween = setInterval(frame, 50);
+		frame();
 	}
 
 	private startSteam(): void {
