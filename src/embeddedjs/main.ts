@@ -97,6 +97,7 @@ const PLUNGE_TOP = 34, PLUNGE_TRAVEL = 74; // fully home puts the seal on the ch
 const STEAM_H = 16, STEAM_W = 22, STEAM_X = 12;
 const STEAM_MAX_MS = 3 * 60 * 1000; // then the cup has gone cold
 const STEAM_FRAME_MS = 1000;
+const TICK_MS = 250;
 const ART_TWEEN_MS = 700;
 const PRESS_TWEEN_MS = 1600; // the plunge earns a slower beat
 const PULL_TWEEN_MS = 900;   // and the plunger comes back out on its own
@@ -338,10 +339,13 @@ class AeroPressTimer {
 	private steps: Step[] = activeRecipe();
 	private art: ArtState = ART_EMPTY;
 	private artTween: ReturnType<typeof setInterval> | undefined;
-	private artSteam: ReturnType<typeof setInterval> | undefined;
+	private steamTicks = 0;
+	private steamFrame = -1;
+	private steaming = false;
 	private settle: ReturnType<typeof setTimeout> | undefined;
 	private startTicks = 0;
 	private durationMs = 0;
+	private counting = false;
 	private ticker: ReturnType<typeof setInterval> | undefined;
 	private readonly ui: any;
 
@@ -431,18 +435,26 @@ class AeroPressTimer {
 		frame();
 	}
 
+	// Frames come off the step clock, not off the moment the steam appeared, so a
+	// swap lands on the same boundary the countdown redraws on.
 	private startSteam(): void {
-		const started = Time.ticks;
-		let frame = 0;
-		this.artSteam = setInterval(() => {
-			if (Time.delta(started) > STEAM_MAX_MS) {
-				this.stopSteam();
-				this.ui.STEAM.visible = false;
-				return;
-			}
-			frame ^= 1;
-			this.ui.STEAM.skin = steamSkins[frame];
-		}, STEAM_FRAME_MS);
+		this.steamTicks = Time.ticks;
+		this.steamFrame = -1;
+		this.steaming = true;
+		this.paintSteam(Time.delta(this.startTicks));
+		this.startTicker();
+	}
+
+	private paintSteam(elapsed: number): void {
+		if (Time.delta(this.steamTicks) > STEAM_MAX_MS) {
+			this.stopSteam();
+			this.ui.STEAM.visible = false;
+			return;
+		}
+		const frame = Math.floor(elapsed / STEAM_FRAME_MS) & 1;
+		if (frame === this.steamFrame) return;
+		this.steamFrame = frame;
+		this.ui.STEAM.skin = steamSkins[frame];
 	}
 
 	private stopArtTween(): void {
@@ -453,10 +465,7 @@ class AeroPressTimer {
 	}
 
 	private stopSteam(): void {
-		if (undefined !== this.artSteam) {
-			clearInterval(this.artSteam);
-			this.artSteam = undefined;
-		}
+		this.steaming = false;
 	}
 
 	private stopArtTimers(): void {
@@ -500,6 +509,7 @@ class AeroPressTimer {
 		this.stopTicker();
 		this.stopSettle();
 		this.index = i;
+		this.startTicks = Time.ticks;
 		const step = this.steps[i];
 		const seconds = step.time ? settings[step.time] : step.seconds;
 
@@ -514,10 +524,10 @@ class AeroPressTimer {
 		this.ui.TIME.style = timeStyle;
 
 		if (seconds > 0) {
-			this.startTicks = Time.ticks;
 			this.durationMs = seconds * 1000;
+			this.counting = true;
 			this.ui.TIME.string = formatTime(seconds);
-			this.ticker = setInterval(() => this.tick(), 250);
+			this.startTicker();
 		}
 		else {
 			this.ui.TIME.style = timeIdleStyle;
@@ -527,10 +537,17 @@ class AeroPressTimer {
 
 	private tick(): void {
 		// Time.ticks is monotonic. Date.now() on PebbleOS 4.33 reads a full second ahead for ~250 ms after each second boundary.
-		const remaining = Math.max(0, Math.ceil((this.durationMs - Time.delta(this.startTicks)) / 1000));
+		const elapsed = Time.delta(this.startTicks);
+		if (this.steaming) this.paintSteam(elapsed);
+		if (this.counting) this.countdown(elapsed);
+		if (!this.steaming && !this.counting) this.stopTicker();
+	}
+
+	private countdown(elapsed: number): void {
+		const remaining = Math.max(0, Math.ceil((this.durationMs - elapsed) / 1000));
 		this.ui.TIME.string = formatTime(remaining);
 		if (remaining <= 0) {
-			this.stopTicker();
+			this.counting = false;
 			this.ui.TIME.style = timeDoneStyle;
 			// A timer on the final step means the brew is over, not that another step waits.
 			const skipped = (this.index < this.steps.length - 1)
@@ -555,7 +572,13 @@ class AeroPressTimer {
 		}
 	}
 
+	private startTicker(): void {
+		if (undefined === this.ticker)
+			this.ticker = setInterval(() => this.tick(), TICK_MS);
+	}
+
 	private stopTicker(): void {
+		this.counting = false;
 		if (undefined !== this.ticker) {
 			clearInterval(this.ticker);
 			this.ticker = undefined;
