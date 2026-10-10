@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" width="144" height="144">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="70%">
+      <stop offset="0" stop-color="#33261E"/>
+      <stop offset="1" stop-color="#140F0C"/>
+    </radialGradient>
+    <clipPath id="chamber"><rect x="60" y="44" width="24" height="36"/></clipPath>
+    <clipPath id="mug"><path d="M58 92h26v14a4 4 0 0 1-4 4H62a4 4 0 0 1-4-4z"/></clipPath>
+  </defs>
+
+  <rect width="144" height="144" rx="30" fill="url(#bg)"/>
+
+  <circle cx="72" cy="72" r="56" fill="none" stroke="#3E3129" stroke-width="7"/>
+  <path d="M72 16A56 56 0 1 1 23.5 100" fill="none" stroke="#FFAA00" stroke-width="7" stroke-linecap="round"/>
+
+  <g transform="translate(72 72) scale(1.1) translate(-72 -72)">
+  <g clip-path="url(#chamber)">
+    <rect x="60" y="56" width="24" height="24" fill="#C46F2C"/>
+    <rect x="60" y="56" width="24" height="3" fill="#F1BE86"/>
+  </g>
+  <rect x="58" y="44" width="28" height="36" fill="none" stroke="#D6D6D6" stroke-width="4"/>
+  <rect x="53" y="40" width="38" height="5" rx="2.5" fill="#D6D6D6"/>
+  <rect x="55" y="80" width="34" height="5" rx="2" fill="#D6D6D6"/>
+
+  <rect x="69" y="35" width="6" height="16" fill="#9E9E9E"/>
+  <rect x="61" y="50" width="22" height="5" rx="1.5" fill="#9E9E9E"/>
+  <rect x="56" y="30" width="32" height="6" rx="3" fill="#9E9E9E"/>
+
+  <path d="M72 88.5c1.6 2 2.4 3.3 2.4 4.3a2.4 2.4 0 0 1-4.8 0c0-1 .8-2.3 2.4-4.3z" fill="#C46F2C"/>
+
+  <g clip-path="url(#mug)">
+    <rect x="58" y="100" width="26" height="12" fill="#C46F2C"/>
+    <rect x="58" y="100" width="26" height="2.5" fill="#F1BE86"/>
+  </g>
+  <path d="M58 92h26v14a4 4 0 0 1-4 4H62a4 4 0 0 1-4-4z" fill="none" stroke="#D6D6D6" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M85.5 96.5c7 0 7 9.5 0 9.5" fill="none" stroke="#D6D6D6" stroke-width="3.5" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -154,6 +154,12 @@ pebble screenshot --emulator emery --no-open shot.png
 pebble logs --emulator emery                      # console.log output only
 ```
 
+## App store
+
+Icons, banner, screenshots and the listing copy live in `store/`, with how to
+regenerate them and publish in `store/README.md`. The launcher icon is
+`resources/img/menu-icon.png`, drawn from `store/src/menu-icon.svg`.
+
 ## Notes / caveats
 
 - Built and verified against SDK 4.33.1 (Sept 2026). Alloy is young and APIs
