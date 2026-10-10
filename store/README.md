@@ -8,7 +8,7 @@ Live at https://apps.repebble.com/cc90e8a3e8324eb1a31a90cd since 1.18.0.
 | `icon-large.png` | 144×144 | Large app icon |
 | `icon-small.png` | 80×80 | Small app icon |
 | `banner.png` | 720×320 | Marketing banner (web dashboard only, the CLI has no flag for it) |
-| `screenshots/emery_*` | 200×228 | Listing screenshots, in upload order. The store allows 5 per platform |
+| `screenshots/emery_*` | 200×228 | Listing screenshots. The store shows them in upload order, so they are numbered by brew step. It allows 5 per platform |
 | `../resources/img/menu-icon.png` | 25×25 | Watch launcher icon, built into the app |
 
 The `emery_` prefix is how `pebble publish` picks the platform for each screenshot.
@@ -22,7 +22,7 @@ The `emery_` prefix is how `pebble publish` picks the platform for each screensh
   colour correction the store's own capture uses.
 - The brew GIF: open the app on POUR in the emulator, then run
   `~/.local/share/uv/tools/pebble-tool/bin/python -I store/capture-brew.py`.
-- The banner embeds `screenshots/emery_2_steep.png`, so rerun `./build.sh` after replacing it.
+- The banner embeds `screenshots/emery_3_steep.png`, so rerun `./build.sh` after replacing it.
 
 ## Listing copy
 
