@@ -156,8 +156,9 @@ pebble logs --emulator emery                      # console.log output only
 
 ## App store
 
-Icons, banner, screenshots and the listing copy live in `store/`, with how to
-regenerate them and publish in `store/README.md`. The launcher icon is
+Listed at https://apps.repebble.com/cc90e8a3e8324eb1a31a90cd. Icons, banner,
+screenshots and the listing copy live in `store/`, with how to regenerate them
+and publish in `store/README.md`. The launcher icon is
 `resources/img/menu-icon.png`, drawn from `store/src/menu-icon.svg`.
 
 ## Notes / caveats

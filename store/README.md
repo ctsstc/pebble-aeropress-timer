@@ -1,6 +1,7 @@
 # App store listing
 
 Everything the Rebble app store listing needs, plus the sources to regenerate it.
+Live at https://apps.repebble.com/cc90e8a3e8324eb1a31a90cd since 1.18.0.
 
 | File | Size | Used for |
 | ---- | ---- | -------- |
@@ -67,19 +68,18 @@ Not affiliated with AeroPress, Inc.
 > `--is-published` flag is accepted but never read: both the create and the
 > release requests always send `isPublished: true`.
 
-Without flags, `pebble publish` records a 7 second GIF of whatever the app shows
-at launch, which here is the POUR step. Pass the curated files instead:
+The app already exists, so a release only needs the version bump in
+`package.json` and notes. `--no-gif-all-platforms` matters: without it,
+`pebble publish` records a 7 second GIF of the POUR step and adds it to the
+listing.
 
 ```sh
-pebble publish --non-interactive --no-gif-all-platforms \
-  --description "$(sed -n '/^```text$/,/^```$/p' store/README.md | sed '1d;$d')" \
-  --category <key> \
-  --icon-small store/icon-small.png --icon-large store/icon-large.png \
-  --screenshots store/screenshots/emery_* \
-  --release-notes "First release."
+pebble publish --non-interactive --no-gif-all-platforms --release-notes "<notes>"
 ```
 
-Without `--non-interactive` it prompts instead, listing the server's categories.
-`--screenshots` is ignored in that mode, so pick "Select local screenshot/GIF
-files" and give it the five files. Either way, upload `banner.png` afterwards in
-the dashboard at https://appstore-api.repebble.com/dashboard.
+To refresh the screenshots in the same release, add
+`--screenshots store/screenshots/emery_* --replace-screenshots`. Without
+`--replace-screenshots` they are appended, and the store holds 5 per platform.
+
+The banner, developer name and listing text are edited in the dashboard at
+https://appstore-api.repebble.com/dashboard.
