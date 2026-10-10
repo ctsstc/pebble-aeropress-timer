@@ -51,9 +51,9 @@ Pour, bloom, stir, steep, flip and press. Each step tells you what to do, and th
 An AeroPress and mug down the side of the screen fill, plunge and steam as you go.
 
 Buttons
-• Down: next step (also skips a running timer)
 • Up: back one step
 • Select: restart the current step
+• Down: next step (also skips a running timer)
 On watches with touch, tapping the top, middle or bottom of the screen does the same.
 
 Settings, in the Pebble phone app
