@@ -20,9 +20,11 @@ The `emery_` prefix is how `pebble publish` picks the platform for each screensh
   `pebble emu-button --emulator emery click down`, and capture with
   `pebble screenshot --emulator emery --no-open <file>`. That applies the same
   colour correction the store's own capture uses.
-- The brew GIF: open the app on POUR in the emulator, then run
-  `~/.local/share/uv/tools/pebble-tool/bin/python -I store/capture-brew.py`.
-- The banner embeds `screenshots/emery_3_steep.png`, so rerun `./build.sh` after replacing it.
+- The GIFs: open the app on POUR in the emulator, then run
+  `~/.local/share/uv/tools/pebble-tool/bin/python -I store/capture-brew.py brew`
+  for the whole recipe, or `finish` for the plunge through to the steaming cup.
+  Each writes its file in `screenshots/`.
+- The banner embeds `screenshots/emery_4_steep.png`, so rerun `./build.sh` after replacing it.
 
 ## Listing copy
 
