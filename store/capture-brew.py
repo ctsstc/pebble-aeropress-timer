@@ -29,9 +29,9 @@ SCENES = {
             (1.6, "down"),  # -> STEEP
             (2.4, "down"),  # -> PRESS
             (2.8, "down"),  # -> DONE
-            (3.4, None),
+            (6.6, None),
         ],
-        "rest": 1200,
+        "rest": 300,
         "out": "emery_1_brew.gif",
     },
     "finish": {
