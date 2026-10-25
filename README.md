@@ -55,8 +55,8 @@ next time you enter that step, so press SELECT to re-arm a running one.
 ## Settings
 
 In the Pebble phone app, open AeroPress Timer and tap Settings. The page has
-chime on/off, chime melody, vibration on/off, chime volume, tap-to-advance
-on/off, and the two steep lengths, plus a reset that refills the form with stock
+chime on/off, chime melody, vibration on/off, chime volume, the reminder delay,
+count and gap, tap-to-advance on/off, and the two steep lengths, plus a reset that refills the form with stock
 values without applying them until you save. Values travel to the watch as an App Message and are saved on the watch,
 so they hold without the phone.
 
@@ -112,6 +112,28 @@ Either alert can be turned off.
 The chime is also
 skipped when the watch is muted (Settings > Sounds & Haptics) or Quiet Time is
 active, and it silently does nothing if the speaker API is unavailable.
+
+## Reminder
+
+Nothing auto-advances, so a finished bloom can sit at 0:00 while the steep
+never starts. The reminder plays a short two-note nudge, with a matching double
+buzz, once you have waited between timers for the delay set in Settings (5 s
+to 2 min, 10 s by default, or off). Settings also picks how many times it
+plays (once up to 10, 3 by default) and the gap between repeats (the same 5 s
+to 2 min choices, 10 s by default). After the last one it gives up. Any button
+clears it.
+
+"Between timers" means a timer has already run and another is still ahead:
+the finished bloom and, in the full flow, Stir. Pour, Press, Done and the end of
+the last timer never nudge, which is why the full flow is no noisier than the
+simplified one and the default does not depend on that setting. It is worked
+out from `RECIPE`, so a recipe with more timers gets the same treatment.
+
+The nudge has no switches of its own: it follows the chime on/off, volume and
+vibration settings, so muting one alert mutes both. `Vibes` offers no strength
+control, so there is nothing to set there. The nudge is a short falling pair of
+notes, where every melody climbs or holds, so it never sounds like a timer
+ending.
 
 Alloy has no speaker module yet, so the chime goes through FFI: `src/c/chime.c`
 wraps `speaker_play_notes()` and `speaker_is_muted()`, and the `ffi` block in

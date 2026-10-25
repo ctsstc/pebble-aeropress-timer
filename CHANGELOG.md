@@ -4,6 +4,22 @@ Newest first. Each version was installed to the watch on the date shown, and
 from 1.18.0 on also published to the app store, where its entry is the
 release notes. Entries before 1.18.2 were reconstructed from the git history.
 
+## 1.20.0 (2026-10-25)
+
+- Settings picks how many times the reminder plays (once up to 10, 3 by
+  default) and the gap between repeats (5 s to 2 min, 10 s by default), so a
+  long first delay no longer means equally long repeats.
+- The reminder options now show on the phone's settings page. 1.19.0 reached
+  the watch before the page was updated, so it ran on the defaults.
+
+## 1.19.0 (2026-10-25)
+
+- A reminder plays when a timer has finished but the next one has not started,
+  so a forgotten bloom no longer holds up the steep. It is a short falling
+  chime with a double buzz, repeated up to three times.
+- Settings picks the delay, from 5 s to 2 min (10 s by default), or turns it
+  off. It follows the chime, volume and vibrate settings.
+
 ## 1.18.2 (2026-10-10)
 
 - Steam swaps frames on the same beat as the countdown again. The fix first

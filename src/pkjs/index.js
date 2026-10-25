@@ -24,7 +24,10 @@ function toMessage(s, preview) {
     GRAPHICS: GRAPHICS.indexOf(s.graphics) < 0 ? 2 : GRAPHICS.indexOf(s.graphics),
     CHIME_MELODY: melody < 0 ? 4 : melody,
     BLOOM_SECONDS: Number(s.bloom !== undefined ? s.bloom : s.steep1) || 30,
-    STEEP_SECONDS: Number(s.steep !== undefined ? s.steep : s.steep2) || 90
+    STEEP_SECONDS: Number(s.steep !== undefined ? s.steep : s.steep2) || 90,
+    REMIND_SECONDS: s.remind !== undefined ? Number(s.remind) : 10,
+    REMIND_COUNT: Number(s.remindCount) || 3,
+    REMIND_GAP: Number(s.remindGap) || 10
   };
 }
 
