@@ -1,7 +1,7 @@
 {
   "name": "aeropress-timer",
   "author": "Cody Swartz",
-  "version": "1.18.2",
+  "version": "1.19.0",
   "keywords": ["pebble-app"],
   "private": true,
   "dependencies": {},
