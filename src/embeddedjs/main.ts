@@ -58,7 +58,7 @@ const MELODIES: Record<Melody, Note[]> = {
 
 // Plays when you sit between timers. Short and falling, unlike every chime, so it never reads as a timer ending.
 const NUDGE: Note[] = [{ midi: 76, ms: 120 }, { midi: 72, ms: 240 }];
-const MAX_NUDGES = 3;
+const MAX_NUDGES = 10;
 // ----------------------------------------------------------------------------
 
 // 64-color display: stick to palette-aligned values (00 / 55 / AA / FF per channel)
@@ -210,6 +210,8 @@ interface Settings {
 	bloom: number; // seconds
 	steep: number;
 	remind: number; // seconds, 0 = off
+	remindCount: number;
+	remindGap: number; // seconds
 }
 
 function isTimed(step: Step): boolean {
@@ -240,7 +242,7 @@ const EASTER_EGG_CHANCE = 0.1;
 const MIN_SECONDS = 5;
 const MAX_SECONDS = 600;
 
-const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, graphics: "animated", melody: "kettle", bloom: 30, steep: 90, remind: 10 };
+const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, graphics: "animated", melody: "kettle", bloom: 30, steep: 90, remind: 10, remindCount: 3, remindGap: 10 };
 const SETTINGS_KEY = "settings";
 
 function loadSettings(): Settings {
@@ -263,7 +265,7 @@ function loadSettings(): Settings {
 let settings = loadSettings();
 
 const inbox: Message = new Message({
-	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "BLOOM_SECONDS", "STEEP_SECONDS", "RAIL_ICONS", "SIMPLE_STEPS", "GRAPHICS", "REMIND_SECONDS"],
+	keys: ["CHIME_ENABLED", "VIBE_ENABLED", "CHIME_VOLUME", "TOUCH_ENABLED", "CHIME_MELODY", "PREVIEW", "BLOOM_SECONDS", "STEEP_SECONDS", "RAIL_ICONS", "SIMPLE_STEPS", "GRAPHICS", "REMIND_SECONDS", "REMIND_COUNT", "REMIND_GAP"],
 	input: 256, // a handful of int tuples; the default is 8 KB each way
 	output: 32,
 	onReadable: () => {
@@ -278,6 +280,7 @@ const inbox: Message = new Message({
 		const graphics = num("GRAPHICS");
 		const melody = num("CHIME_MELODY");
 		const remind = num("REMIND_SECONDS");
+		const remindCount = num("REMIND_COUNT");
 		const duration = (key: string, current: number): number => {
 			const value = num(key);
 			return value === undefined ? current : Math.max(MIN_SECONDS, Math.min(MAX_SECONDS, value));
@@ -294,9 +297,11 @@ const inbox: Message = new Message({
 			bloom: duration("BLOOM_SECONDS", settings.bloom),
 			steep: duration("STEEP_SECONDS", settings.steep),
 			remind: remind === undefined ? settings.remind : Math.max(0, Math.min(MAX_SECONDS, remind)),
+			remindCount: remindCount === undefined ? settings.remindCount : Math.max(1, Math.min(MAX_NUDGES, remindCount)),
+			remindGap: duration("REMIND_GAP", settings.remindGap),
 		};
 		localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} railIcons=${settings.railIcons} simplified=${settings.simplified} graphics=${settings.graphics} melody=${settings.melody} bloom=${settings.bloom} steep=${settings.steep} remind=${settings.remind}`);
+		console.log(`settings: chime=${settings.chime} vibe=${settings.vibe} volume=${settings.volume} touch=${settings.touch} railIcons=${settings.railIcons} simplified=${settings.simplified} graphics=${settings.graphics} melody=${settings.melody} bloom=${settings.bloom} steep=${settings.steep} remind=${settings.remind}x${settings.remindCount}/${settings.remindGap}`);
 		controller?.applyChrome();
 		if (num("PREVIEW")) alert(); // Save on the phone plays the new choice once
 	},
@@ -599,8 +604,8 @@ class AeroPressTimer {
 		this.nudge = undefined;
 		if (settings.remind <= 0) return;
 		alert("nudge", NUDGE);
-		if (++this.nudges < MAX_NUDGES)
-			this.nudge = setTimeout(() => this.remind(), settings.remind * 1000);
+		if (++this.nudges < settings.remindCount)
+			this.nudge = setTimeout(() => this.remind(), settings.remindGap * 1000);
 	}
 
 	private stopNudge(): void {

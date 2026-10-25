@@ -32,7 +32,9 @@
       "RAIL_ICONS",
       "SIMPLE_STEPS",
       "GRAPHICS",
-      "REMIND_SECONDS"
+      "REMIND_SECONDS",
+      "REMIND_COUNT",
+      "REMIND_GAP"
     ],
     "resources": {
       "media": [

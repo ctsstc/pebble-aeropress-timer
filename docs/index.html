@@ -34,6 +34,8 @@
 <div class="row"><label for="volume">Chime volume</label><input id="volume" type="range" min="0" max="100" step="5"><span class="value" id="volumeValue"></span></div>
 <div class="row"><label for="vibe">Vibrate at 0:00</label><input id="vibe" type="checkbox"></div>
 <div class="row chime-row"><label for="remind">Reminder<small>Nudges you when a timer has finished but the next hasn't started. Uses the chime and vibrate settings above.</small></label><select id="remind"><option value="0">Off</option><option value="5">After 5 s</option><option value="10">After 10 s</option><option value="15">After 15 s</option><option value="30">After 30 s</option><option value="45">After 45 s</option><option value="60">After 1 min</option><option value="120">After 2 min</option></select></div>
+<div class="row chime-row"><label for="remindcount">How many reminders</label><select id="remindcount"><option value="1">Once</option><option value="2">2 times</option><option value="3">3 times</option><option value="5">5 times</option><option value="10">10 times</option></select></div>
+<div class="row chime-row"><label for="remindgap">Time between reminders</label><select id="remindgap"><option value="5">5 s</option><option value="10">10 s</option><option value="15">15 s</option><option value="30">30 s</option><option value="45">45 s</option><option value="60">1 min</option><option value="120">2 min</option></select></div>
 <div class="row"><label for="touch">Tap screen to advance<small>Top third goes back, middle restarts the step, bottom advances.</small></label><input id="touch" type="checkbox"></div>
 <div class="row"><label for="railicons">Show tap/button icons<small>Hints down the right edge, lined up with the physical buttons. The buttons and the tap zones work either way.</small></label><input id="railicons" type="checkbox"></div>
 <div class="row"><label for="simplified">Simplified steps<small>Only the two timers, skipping the setup, stir and press prompts.</small></label><input id="simplified" type="checkbox"></div>
@@ -50,7 +52,7 @@
   var params = new URLSearchParams(location.search);
   var returnTo = params.get("return_to") || "pebblejs://close#";
 
-  var DEFAULTS = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, graphics: "animated", melody: "kettle", bloom: 30, steep: 90, remind: 10 };
+  var DEFAULTS = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, graphics: "animated", melody: "kettle", bloom: 30, steep: 90, remind: 10, remindCount: 3, remindGap: 10 };
   var settings = Object.assign({}, DEFAULTS);
   try {
     var given = JSON.parse(params.get("settings"));
@@ -65,6 +67,8 @@
   var graphics = document.getElementById("graphics");
   var melody = document.getElementById("melody");
   var remind = document.getElementById("remind");
+  var remindCount = document.getElementById("remindcount");
+  var remindGap = document.getElementById("remindgap");
   var play = document.getElementById("play");
   var bloom = document.getElementById("bloom");
   var steep = document.getElementById("steep");
@@ -91,10 +95,20 @@
     if (!melody.value) melody.value = DEFAULTS.melody;
     remind.value = String(s.remind !== undefined ? s.remind : DEFAULTS.remind);
     if (!remind.value) remind.value = String(DEFAULTS.remind);
+    remindCount.value = String(s.remindCount || DEFAULTS.remindCount);
+    if (!remindCount.value) remindCount.value = String(DEFAULTS.remindCount);
+    remindGap.value = String(s.remindGap || DEFAULTS.remindGap);
+    if (!remindGap.value) remindGap.value = String(DEFAULTS.remindGap);
+    syncReminder();
     bloom.value = s.bloom !== undefined ? s.bloom : s.steep1;
     steep.value = s.steep !== undefined ? s.steep : s.steep2;
     volume.value = s.volume;
     volumeValue.textContent = volume.value;
+  }
+
+  function syncReminder() {
+    remindCount.disabled = remind.value === "0";
+    remindGap.disabled = remind.value === "0" || remindCount.value === "1";
   }
 
   var audio = null;
@@ -133,6 +147,8 @@
   apply(settings);
   volume.addEventListener("input", function () { volumeValue.textContent = volume.value; });
   play.addEventListener("click", function () { preview(melody.value); });
+  remind.addEventListener("change", syncReminder);
+  remindCount.addEventListener("change", syncReminder);
   document.getElementById("reset").addEventListener("click", function () { apply(DEFAULTS); });
 
   document.getElementById("save").addEventListener("click", function () {
@@ -147,7 +163,9 @@
       melody: melody.value,
       bloom: seconds(bloom, DEFAULTS.bloom),
       steep: seconds(steep, DEFAULTS.steep),
-      remind: Number(remind.value)
+      remind: Number(remind.value),
+      remindCount: Number(remindCount.value),
+      remindGap: Number(remindGap.value)
     };
     location.href = returnTo + encodeURIComponent(JSON.stringify(out));
   });
