@@ -31,7 +31,8 @@
       "STEEP_SECONDS",
       "RAIL_ICONS",
       "SIMPLE_STEPS",
-      "GRAPHICS"
+      "GRAPHICS",
+      "REMIND_SECONDS"
     ],
     "resources": {
       "media": [
