@@ -41,12 +41,16 @@ The `emery_` prefix is how `pebble publish` picks the platform for each screensh
 
 **Source:** https://github.com/ctsstc/pebble-aeropress-timer
 
-**Description** (1120 of 1600 characters):
+**Description** (1525 of 1600 characters). The championship figures come from
+https://worldaeropresschampionship.com/pages/recipes, checked 2026-10-25 through
+the 2025 event; recount them after each championship.
 
 ```text
-A step-by-step timer for the inverted AeroPress method, made for Pebble Time 2.
+A step-by-step timer for the inverted AeroPress method, made for Pebble Time 2. Most World AeroPress Championship winners brewed inverted: 11 of the 15 champions with a published recipe, including every one from 2015 to 2024.
 
-Pour, bloom, stir, steep, flip and press. Each step tells you what to do, and the two timed steps count down, then buzz and chime at zero. Nothing moves on by itself: the timer waits for you, so a slow pour or an extra stir never throws off the brew.
+Pour, bloom, stir, steep, flip and press. Each step tells you what to do, and the two timed steps count down, then buzz and chime at zero. Nothing moves on by itself: the timer waits for you, so a slow pour or an extra stir never throws off the brew. If you get distracted after the bloom, a short reminder nudges you on to the steep.
+
+Already know the method? Turn on Simplified steps and it's just the two timers, bloom and steep.
 
 An AeroPress and mug down the side of the screen fill, plunge and steam as you go.
 
@@ -60,6 +64,7 @@ Settings, in the Pebble phone app
 • Bloom and steep lengths (30 and 90 seconds by default)
 • Five chime melodies and a volume, previewed on the watch when you save
 • Chime and vibration on or off
+• Reminders between the timers: how soon, how many and how far apart, or off
 • Simplified steps: just the two timers
 • Graphics animated, static or off
 • Show or hide the button hints
