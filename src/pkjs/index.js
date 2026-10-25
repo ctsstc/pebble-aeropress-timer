@@ -25,7 +25,7 @@ function toMessage(s, preview) {
     CHIME_MELODY: melody < 0 ? 4 : melody,
     BLOOM_SECONDS: Number(s.bloom !== undefined ? s.bloom : s.steep1) || 30,
     STEEP_SECONDS: Number(s.steep !== undefined ? s.steep : s.steep2) || 90,
-    REMIND_SECONDS: s.remind !== undefined ? Number(s.remind) : 30
+    REMIND_SECONDS: s.remind !== undefined ? Number(s.remind) : 10
   };
 }
 

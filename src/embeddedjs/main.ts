@@ -240,7 +240,7 @@ const EASTER_EGG_CHANCE = 0.1;
 const MIN_SECONDS = 5;
 const MAX_SECONDS = 600;
 
-const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, graphics: "animated", melody: "kettle", bloom: 30, steep: 90, remind: 30 };
+const DEFAULT_SETTINGS: Settings = { chime: true, vibe: true, volume: 40, touch: true, railIcons: true, simplified: false, graphics: "animated", melody: "kettle", bloom: 30, steep: 90, remind: 10 };
 const SETTINGS_KEY = "settings";
 
 function loadSettings(): Settings {

@@ -117,9 +117,9 @@ active, and it silently does nothing if the speaker API is unavailable.
 
 Nothing auto-advances, so a finished bloom can sit at 0:00 while the steep
 never starts. The reminder plays a short two-note nudge, with a matching double
-buzz, once you have waited between timers for the delay set in Settings (30 s
-by default, or off). It repeats on the same delay up to three times, then
-gives up.
+buzz, once you have waited between timers for the delay set in Settings (5 s
+to 2 min, 10 s by default, or off). It repeats on the same delay up to three
+times, then gives up.
 
 "Between timers" means a timer has already run and another is still ahead:
 the finished bloom and, in the full flow, Stir. Pour, Press, Done and the end of
